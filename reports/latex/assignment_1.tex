@@ -1,0 +1,243 @@
+\documentclass[assignment.tex]{subfiles}
+\begin{document}
+
+\chapter{Assignment 1: Syntactic Analysis Pipeline}
+\label{sec:assignment1}
+
+Legal contracts contain long, complex sentences with nested clauses, coordinating
+structures, and specialised vocabulary.  The first stage of the pipeline decomposes
+raw contract text into atomic, analysable units and extracts their syntactic
+structure.  Three components are described below: clause splitting, noun-phrase (NP)
+chunking, and full dependency parsing.
+
+\section{Clause Splitting}
+\label{subsec:clause-splitting}
+
+\subsection{Motivation}
+
+A single legal sentence can span several lines and encode multiple independent
+obligations or conditions.  Downstream semantic models (NER, SRL, intent
+classification) perform significantly better when each input is a single, coherent
+proposition.  The clause splitter reduces complex sentences to their atomic units
+while preserving the integrity of conditional constructions.
+
+\subsection{Algorithm}
+
+The splitter operates in five sequential stages:
+
+\begin{enumerate}[leftmargin=*, itemsep=4pt]
+    \item \textbf{Paragraph segmentation.}  The raw input text is partitioned on
+          double newlines, treating each paragraph as an independent processing unit
+          to avoid cross-paragraph sentence boundary errors.
+
+    \item \textbf{Sentence segmentation.}  Each paragraph is processed with
+          spaCy's \path{en_core_web_sm} model, which detects sentence boundaries
+          more reliably than purely rule-based tokenisers.
+
+    \item \textbf{Conditional detection.}  For each sentence, the algorithm checks
+          whether any token simultaneously satisfies \emph{all three} of the
+          following: (a) its part-of-speech tag is \texttt{SCONJ}, (b) its
+          dependency relation is \texttt{mark}, and (c) its lower-case form appears
+          in the conditional keyword set (Table~\ref{tab:split-keywords}).  When
+          this condition is met, the entire sentence is retained as a single
+          indivisible clause.  Splitting a conditional sentence would sever the
+          logical dependency between the protasis and apodosis.
+
+    \item \textbf{Coordinating-conjunction split.}  For sentences that do not
+          trigger the conditional guard, the algorithm scans for \texttt{CC} tokens
+          whose lower-case form belongs to the coordinate keyword set
+          (Table~\ref{tab:split-keywords}).  A split is \emph{only} performed when
+          \textbf{both} resulting fragments independently contain a subject--verb
+          pair, verified by requiring at least one \texttt{nsubj} or
+          \texttt{nsubjpass} dependent and one \texttt{ROOT} or main-verb token on
+          each side.
+
+    \item \textbf{Fragment pruning.}  Any resulting clause with two tokens or fewer
+          is discarded as a non-informative syntactic fragment.
+\end{enumerate}
+
+\begin{table}[H]
+    \centering
+    \caption{Keyword sets governing clause-splitting behaviour.}
+    \label{tab:split-keywords}
+    \begin{tabular}{@{}lp{9cm}@{}}
+        \toprule
+        \textbf{Set} & \textbf{Keywords} \\
+        \midrule
+        Conditional (\texttt{SCONJ}) &
+            \textit{if, unless, provided, whereas, subject, upon, when, whenever,
+            although, though, because, since, after, before, until} \\[4pt]
+        Coordinate (\texttt{CC}) &
+            \textit{and, but, or, nor, yet, so} \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\subsection{Input/Output Examples}
+
+\paragraph{Example 1 — Coordinating split.}
+
+\noindent\textbf{Input:}
+\begin{quote}
+    \textit{``The Employer shall pay the Employee a monthly salary of \$5,000 and
+    the Employee shall complete all assigned tasks by the deadline.''}
+\end{quote}
+
+\noindent\textbf{Output} — two independent clauses, one per line:
+\begin{enumerate}
+    \item \textit{The Employer shall pay the Employee a monthly salary of \$5,000}
+    \item \textit{the Employee shall complete all assigned tasks by the deadline}
+\end{enumerate}
+
+The conjunction \textit{and} carries the \texttt{CC} tag.  Both resulting fragments
+contain independent subject--verb pairs (\textit{Employer/shall pay} and
+\textit{Employee/shall complete}), so a split is performed.
+
+\paragraph{Example 2 — Conditional retained as single clause.}
+
+\noindent\textbf{Input:}
+\begin{quote}
+    \textit{``If the Employee fails to report to work within 3 days without notice,
+    the Employer may terminate this Agreement.''}
+\end{quote}
+
+\noindent\textbf{Output} — single clause (no split):
+\begin{enumerate}
+    \item \textit{If the Employee fails to report to work within 3 days without
+    notice, the Employer may terminate this Agreement.}
+\end{enumerate}
+
+The token \textit{If} carries \texttt{SCONJ} POS and \texttt{mark} dependency
+relation, and appears in the conditional keyword set; the sentence is therefore
+preserved as an atomic unit.
+
+\section{NP Chunking}
+\label{subsec:np-chunking}
+
+\subsection{Method}
+
+Noun-phrase chunking uses spaCy's built-in \texttt{doc.noun\_chunks} iterator,
+which returns contiguous base NP spans derived from the dependency parse tree.
+These spans are converted to the IOB (\textbf{I}nside--\textbf{O}utside--%
+\textbf{B}eginning) tagging scheme defined as follows:
+
+\begin{itemize}[leftmargin=*, itemsep=2pt]
+    \item \textbf{B-NP}: the first (or only) token of a noun phrase span.
+    \item \textbf{I-NP}: any subsequent continuation token within the same span.
+    \item \textbf{O}:    a token that does not belong to any noun phrase.
+\end{itemize}
+
+Output is written to \texttt{output/chunks.txt} as tab-separated
+\textit{token}$\backslash$t\textit{IOB-tag} pairs, one pair per line, with a blank
+line separating successive clauses.
+
+\subsection{IOB Tagging Example}
+
+Table~\ref{tab:iob-example} shows the IOB annotation produced for the clause
+\textit{``The contracting parties shall maintain confidentiality.''}.
+
+\begin{table}[H]
+    \centering
+    \caption{IOB tags for \textit{``The contracting parties shall maintain
+    confidentiality.''}}
+    \label{tab:iob-example}
+    \begin{tabular}{@{}ll@{}}
+        \toprule
+        \textbf{Token}   & \textbf{IOB Tag} \\
+        \midrule
+        The              & B-NP \\
+        contracting      & I-NP \\
+        parties          & I-NP \\
+        shall            & O    \\
+        maintain         & O    \\
+        confidentiality  & B-NP \\
+        .                & O    \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+The determiner \textit{The}, the pre-modifying participle \textit{contracting}, and
+the head noun \textit{parties} together form the subject NP.  The modal auxiliary
+\textit{shall} and main verb \textit{maintain} are outside any NP and are tagged
+\texttt{O}.  The object NP \textit{confidentiality} begins a new span tagged
+\texttt{B-NP}.
+
+\section{Dependency Analysis}
+\label{subsec:dependency-parsing}
+
+\subsection{Parser}
+
+Full dependency parsing is performed with spaCy's \texttt{en\_core\_web\_sm} model,
+which implements a transition-based arc-eager dependency parser trained on the
+English OntoNotes 5 corpus and annotated with Universal Dependencies (UD) relation
+labels.
+
+\subsection{Output Format}
+
+Each clause is serialised to a JSON object containing the following top-level
+fields:
+
+\begin{itemize}[leftmargin=*, itemsep=2pt]
+    \item \texttt{clause\_id} — zero-based integer index of the clause in the
+          document.
+    \item \texttt{text} — the original clause string before tokenisation.
+    \item \texttt{tokens} — an array of token objects, each carrying:
+    \begin{itemize}
+        \item \texttt{id}: position index within the clause (zero-based).
+        \item \texttt{token}: surface form as it appears in the text.
+        \item \texttt{lemma}: morphologically normalised form.
+        \item \texttt{pos}: universal POS tag (e.g.\ \texttt{NOUN}, \texttt{VERB}).
+        \item \texttt{tag}: fine-grained Penn Treebank tag
+              (e.g.\ \texttt{NN}, \texttt{VB}, \texttt{MD}).
+        \item \texttt{dep}: Universal Dependencies relation label
+              (e.g.\ \texttt{nsubj}, \texttt{dobj}, \texttt{ROOT}).
+        \item \texttt{head\_id}: position index of the syntactic head token.
+        \item \texttt{head\_token}: surface form of the head.
+    \end{itemize}
+\end{itemize}
+
+The complete output is written to \texttt{output/dependencies.json} as a JSON array
+of these clause objects.
+
+\subsection{JSON Output Example}
+
+\begin{lstlisting}[style=jsonStyle,
+                   caption={Dependency parse output for the clause
+                   \textit{``The Employer shall pay the salary.''}},
+                   label={lst:dep-json}]
+{
+  "clause_id": 0,
+  "text": "The Employer shall pay the salary.",
+  "tokens": [
+    {"id": 0, "token": "The",      "lemma": "the",
+     "pos": "DET",   "tag": "DT", "dep": "det",
+     "head_id": 1,   "head_token": "Employer"},
+    {"id": 1, "token": "Employer", "lemma": "employer",
+     "pos": "NOUN",  "tag": "NN", "dep": "nsubj",
+     "head_id": 3,   "head_token": "pay"},
+    {"id": 2, "token": "shall",    "lemma": "shall",
+     "pos": "AUX",   "tag": "MD", "dep": "aux",
+     "head_id": 3,   "head_token": "pay"},
+    {"id": 3, "token": "pay",      "lemma": "pay",
+     "pos": "VERB",  "tag": "VB", "dep": "ROOT",
+     "head_id": 3,   "head_token": "pay"},
+    {"id": 4, "token": "the",      "lemma": "the",
+     "pos": "DET",   "tag": "DT", "dep": "det",
+     "head_id": 5,   "head_token": "salary"},
+    {"id": 5, "token": "salary",   "lemma": "salary",
+     "pos": "NOUN",  "tag": "NN", "dep": "dobj",
+     "head_id": 3,   "head_token": "pay"},
+    {"id": 6, "token": ".",        "lemma": ".",
+     "pos": "PUNCT", "tag": ".",  "dep": "punct",
+     "head_id": 3,   "head_token": "pay"}
+  ]
+}
+\end{lstlisting}
+
+The ROOT of the clause is \textit{pay} (index 3).  \textit{Employer} is its nominal
+subject (\texttt{nsubj}), \textit{shall} is the auxiliary verb (\texttt{aux}), and
+\textit{salary} is the direct object (\texttt{dobj}).  The determiner
+\textit{the} (index 0) modifies \textit{Employer} via the \texttt{det} relation,
+while \textit{the} (index 4) modifies \textit{salary} similarly.
+
+\end{document}

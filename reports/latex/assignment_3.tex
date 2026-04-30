@@ -1,0 +1,209 @@
+\documentclass[assignment.tex]{subfiles}
+\begin{document}
+
+\chapter{Assignment 3: RAG-Based Legal Contract Chatbot}
+\label{sec:assignment3}
+
+The third stage integrates all upstream outputs — structured clauses, NER entities,
+SRL roles, and intent labels — into an end-to-end Retrieval-Augmented Generation
+(RAG) chatbot.  Users can ask natural-language questions about a legal contract and
+receive answers grounded in specific, cited clauses.
+
+\section{System Overview}
+\label{subsec:rag-overview}
+
+The system is composed of three principal modules that form a linear pipeline
+(Table~\ref{tab:rag-components}): a vector store for dense retrieval, an LCEL
+RAG pipeline for answer generation, and a Streamlit front-end for user interaction.
+
+\begin{table}[H]
+    \centering
+    \caption{RAG system components and their roles.}
+    \label{tab:rag-components}
+    \begin{tabular}{@{}lll@{}}
+        \toprule
+        \textbf{Module} & \textbf{Technology} & \textbf{Role} \\
+        \midrule
+        Embedding model  & \texttt{all-MiniLM-L6-v2}          & Dense clause representation \\
+        Vector database  & ChromaDB (cosine similarity)        & Semantic clause retrieval \\
+        LLM              & Gemini \texttt{gemini-1.5-flash}    & Grounded answer generation \\
+        Orchestration    & LangChain LCEL                      & Prompt + chain management \\
+        User interface   & Streamlit                           & Interactive web application \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\subsection{Vector Store and Indexing}
+\label{subsec:vector-store}
+
+\subsection{Embedding Model}
+
+Clause embeddings are produced by
+\texttt{sentence-transformers/all-MiniLM-L6-v2}, a lightweight 384-dimension
+bi-encoder optimised for semantic similarity tasks.  Its small size makes it
+suitable for real-time encoding of query strings at inference time.
+
+\subsection{ChromaDB Configuration}
+
+The vector store is implemented using ChromaDB's \texttt{PersistentClient},
+enabling the index to survive application restarts without re-processing the
+contract.  Cosine similarity is used as the distance metric:
+
+\begin{lstlisting}[language=Python,
+                   caption={\texttt{vector\_store.py} — ChromaDB collection
+                   initialisation.},
+                   label={lst:chroma-init}]
+import chromadb
+from chromadb.config import Settings
+from sentence_transformers import SentenceTransformer
+
+encoder = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
+
+client = chromadb.PersistentClient(path="./chroma_db")
+collection = client.get_or_create_collection(
+    name="legal_clauses",
+    metadata={"hnsw:space": "cosine"},
+)
+\end{lstlisting}
+
+\subsection{Metadata Schema}
+
+Each document stored in ChromaDB carries the following metadata fields derived
+from the upstream pipeline outputs:
+
+\begin{itemize}[leftmargin=*, itemsep=2pt]
+    \item \texttt{ner\_entities} — JSON-serialised list of entity spans
+          (text, label, start, end).
+    \item \texttt{srl\_predicate} — main verb of the clause.
+    \item \texttt{srl\_roles} — JSON-serialised role dictionary
+          (Agent, Theme, Recipient, Time, Condition).
+    \item \texttt{intent\_tfidf} — intent label from the TF-IDF classifier.
+    \item \texttt{intent\_bert} — intent label from the BERT classifier.
+\end{itemize}
+
+Storing this metadata alongside the clause text enables the front-end to present
+NER and SRL information for each retrieved source without additional inference.
+
+\section{RAG Pipeline}
+\label{subsec:rag-pipeline}
+
+\subsection{LangChain LCEL Chain}
+
+The retrieval and generation steps are orchestrated via LangChain's composable
+LCEL (LangChain Expression Language) syntax:
+
+\begin{lstlisting}[language=Python,
+                   caption={\texttt{rag\_pipeline.py} — LCEL chain definition.},
+                   label={lst:lcel-chain}]
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_core.output_parsers import StrOutputParser
+
+llm = ChatGoogleGenerativeAI(model="gemini-1.5-flash", temperature=0.2)
+
+chain = ChatPromptTemplate.from_messages([
+    ("system", SYSTEM_PROMPT),
+    ("human",  "{question}"),
+]) | llm | StrOutputParser()
+\end{lstlisting}
+
+\subsection{Anti-Hallucination System Prompt}
+
+A carefully designed system prompt constrains the model to stay within the
+retrieved context.  The key directives are:
+
+\begin{enumerate}[leftmargin=*, itemsep=3pt]
+    \item \textbf{Citation requirement.}  Every factual claim must be supported by
+          an explicit clause number (e.g.\ \textit{``As stated in Clause 7,
+          \ldots''}).
+    \item \textbf{Refusal policy.}  If the answer to the user's question cannot be
+          found in the retrieved clauses, the model must explicitly decline to
+          answer rather than confabulate.
+    \item \textbf{Scope restriction.}  The model must answer only from the provided
+          contract context and must not import external legal knowledge as a
+          primary source.
+\end{enumerate}
+
+\begin{lstlisting}[language=Python,
+                   caption={System prompt enforcing citation and refusal.},
+                   label={lst:sys-prompt}]
+SYSTEM_PROMPT = """You are a legal contract assistant.
+Answer questions ONLY based on the contract clauses provided below.
+
+Rules:
+- Cite clause numbers for every claim (e.g. "Clause 3 states that...").
+- If the answer is NOT found in the provided clauses, respond:
+  "I cannot find information about this in the contract."
+- Do NOT use external legal knowledge as a primary answer source.
+
+Contract clauses:
+{context}
+"""
+\end{lstlisting}
+
+\subsection{Multi-Turn Conversation}
+
+The \texttt{chat()} method maintains a list of \texttt{HumanMessage} and
+\texttt{AIMessage} objects to support multi-turn dialogue.  The conversation
+history is prepended to each new request, allowing the model to resolve
+coreferences across turns (e.g.\ \textit{``Who does \textit{they} refer to in the
+previous answer?''}).
+
+\subsection{Top-$k$ Retrieval}
+
+The number of retrieved clauses is configurable via the \texttt{top\_k} parameter
+(default: 5).  At query time, the user's question is embedded with the same
+\texttt{all-MiniLM-L6-v2} encoder, and the $k$ clauses with the highest cosine
+similarity scores are returned from ChromaDB and injected into the system prompt
+as the context window.
+
+\section{Streamlit User Interface}
+\label{subsec:streamlit}
+
+\subsection{Interface Layout}
+
+The web application (\texttt{app.py}) is built with Streamlit and organised into
+two panels:
+
+\begin{itemize}[leftmargin=*, itemsep=3pt]
+    \item \textbf{Sidebar.}
+    \begin{itemize}
+        \item Top-$k$ slider (range 1--10) to control retrieval breadth.
+        \item \textit{Build Index} button: triggers contract parsing and ChromaDB
+              indexing.
+        \item \textit{Clear Index} button: deletes the persisted collection to
+              allow re-indexing with a different document.
+    \end{itemize}
+    \item \textbf{Main panel.}
+    \begin{itemize}
+        \item Chat input box for natural-language questions.
+        \item Conversation history rendered as alternating user/assistant message
+              bubbles.
+        \item Colour-coded intent badges next to each retrieved source clause
+              (Obligation = blue, Prohibition = red, Right = green,
+              Termination Condition = orange).
+        \item Expandable \textit{Sources} panel for each assistant response,
+              revealing the retrieved clause text along with its NER entities and
+              SRL roles extracted in the upstream pipeline.
+    \end{itemize}
+\end{itemize}
+
+\subsection{Index Building Workflow}
+
+When the user clicks \textit{Build Index}, the application executes the following
+steps:
+
+\begin{enumerate}[leftmargin=*, itemsep=3pt]
+    \item Load the contract text from the configured file path.
+    \item Run the full upstream pipeline (clause splitting, NER, SRL, intent
+          classification).
+    \item Embed all clause texts with \texttt{all-MiniLM-L6-v2}.
+    \item Upsert embeddings, texts, and metadata into the ChromaDB collection.
+    \item Display a success notification with the total number of indexed clauses.
+\end{enumerate}
+
+Once the index is built, query latency is dominated by embedding the question
+(${\approx}10$\,ms) and the Gemini API round-trip, making the chatbot responsive
+for interactive use.
+
+\end{document}

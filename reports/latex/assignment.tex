@@ -1,0 +1,288 @@
+\documentclass[12pt,a4paper]{report}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[english]{babel}
+
+\usepackage[top=2.5cm, bottom=2.5cm, left=3cm, right=2.5cm]{geometry}
+
+\usepackage{microtype}
+
+\usepackage{amsmath}
+
+\usepackage{graphicx}
+\usepackage{subfiles}
+
+\usepackage{booktabs}
+\usepackage{caption}
+\usepackage{tabularx}
+
+\usepackage{float}
+
+\usepackage{enumitem}
+
+\usepackage[table,dvipsnames]{xcolor}
+\definecolor{codebg}{RGB}{248,248,248}
+\definecolor{codeframe}{RGB}{200,200,200}
+\definecolor{keywordcolor}{RGB}{0,0,200}
+\definecolor{stringcolor}{RGB}{163,21,21}
+\definecolor{commentcolor}{RGB}{0,128,0}
+
+\usepackage{listings}
+
+\lstdefinestyle{pythonStyle}{
+    language=Python,
+    backgroundcolor=\color{codebg},
+    frame=single,
+    rulecolor=\color{codeframe},
+    basicstyle=\small\ttfamily,
+    keywordstyle=\color{keywordcolor}\bfseries,
+    stringstyle=\color{stringcolor},
+    commentstyle=\color{commentcolor}\itshape,
+    numberstyle=\tiny\color{gray},
+    numbers=left,
+    numbersep=8pt,
+    stepnumber=1,
+    showstringspaces=false,
+    breaklines=true,
+    breakatwhitespace=false,
+    tabsize=4,
+    captionpos=b,
+}
+
+\lstdefinestyle{jsonStyle}{
+    language={},
+    backgroundcolor=\color{codebg},
+    frame=single,
+    rulecolor=\color{codeframe},
+    basicstyle=\small\ttfamily,
+    stringstyle=\color{stringcolor},
+    commentstyle=\color{commentcolor}\itshape,
+    numberstyle=\tiny\color{gray},
+    numbers=left,
+    numbersep=8pt,
+    stepnumber=1,
+    showstringspaces=false,
+    breaklines=true,
+    breakatwhitespace=false,
+    tabsize=2,
+    captionpos=b,
+    morestring=[b]",
+    morecomment=[l]{//},
+}
+
+\lstset{style=pythonStyle}
+
+\usepackage[
+    colorlinks=true,
+    linkcolor=NavyBlue,
+    citecolor=NavyBlue,
+    urlcolor=NavyBlue,
+    pdftitle={Legal Contract Analysis: NLP Processing Pipeline},
+    pdfauthor={HCMUT --- Semester 252},
+    pageanchor=false,
+]{hyperref}
+
+\title{%
+    \vspace{-1cm}
+    \textbf{Legal Contract Analysis:}\\[6pt]
+    \textbf{NLP Processing Pipeline}\\[12pt]
+    \large Technical Report
+}
+\author{HCMUT\,---\,Semester 252 (2025\,--\,2026)}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+\thispagestyle{empty}
+\pagenumbering{roman}
+
+\vspace{1cm}
+\begin{abstract}
+    This report documents a multi-stage NLP pipeline for analysing English legal
+    contracts.  The system proceeds through three assignments.  Assignment~1
+    implements a syntactic processing layer comprising clause splitting (spaCy
+    sentence segmentation augmented with rule-based coordinating-conjunction and
+    subordinating-conjunction detection), noun-phrase (NP) chunking with IOB
+    tagging, and full Universal Dependencies parsing.  Assignment~2 adds a semantic
+    extraction layer: a custom Named Entity Recognition (NER) model fine-tuned on
+    \texttt{nlpaueb/legal-bert-base-uncased} with a rule-based fallback, a
+    dependency-tree-based Semantic Role Labelling (SRL) module, and a dual-model
+    intent classifier (TF-IDF\,+\,Logistic Regression and fine-tuned BERT).
+    Assignment~3 integrates all upstream outputs into an end-to-end
+    Retrieval-Augmented Generation (RAG) chatbot backed by ChromaDB, the
+    \texttt{all-MiniLM-L6-v2} embedding model, Google Gemini, and a Streamlit web
+    interface.
+\end{abstract}
+
+\newpage
+\tableofcontents
+\clearpage
+\pagenumbering{arabic}
+\hypersetup{pageanchor=true}
+
+\subfile{assignment_1}
+
+\newpage
+\subfile{assignment_2}
+
+\newpage
+\subfile{assignment_3}
+
+\newpage
+\chapter{Discussion and Conclusion}
+\label{chap:discussion}
+
+\section{Summary of Achievements}
+\label{sec:achievements}
+
+The three assignments collectively deliver a complete, end-to-end NLP pipeline
+for legal contract understanding.
+
+\paragraph{Assignment 1 — Syntactic Pipeline.}
+A full syntactic preprocessing layer was built using spaCy's
+\texttt{en\_core\_web\_sm} model.  The clause splitter correctly handles
+conditional sentences (preserving logical dependencies) and coordinates splits
+(requiring both fragments to be grammatically complete).  IOB-tagged NP chunks
+and full Universal Dependencies parse trees are produced for every clause,
+providing the structural foundation for all downstream components.
+
+\paragraph{Assignment 2 — Semantic Extraction.}
+A three-layer semantic extraction stack was implemented.  The custom NER model
+combines Legal-BERT fine-tuning with a rule-based fallback to identify six
+domain-specific entity types (PARTY, MONEY, DATE, RATE, PENALTY, LAW).  The
+dependency-tree-based SRL module extracts five semantic roles (Agent, Theme,
+Recipient, Time, Condition) without requiring a computationally expensive dedicated
+SRL model.  The dual-model intent classifier provides both an interpretable
+TF-IDF baseline and a higher-accuracy BERT model across four intent classes.
+
+\paragraph{Assignment 3 — RAG Chatbot.}
+An interactive Streamlit application integrates all upstream outputs.  ChromaDB
+with cosine similarity provides fast, semantically grounded clause retrieval.  The
+LangChain LCEL chain orchestrates embedding, retrieval, and generation via Google
+Gemini (\texttt{gemini-1.5-flash}), with an anti-hallucination system prompt that
+mandates clause citation and explicit refusal when information is absent.
+
+\section{Error Analysis}
+\label{sec:error-analysis}
+
+Despite solid overall performance, several systematic error patterns were observed
+during qualitative evaluation.
+
+\subsection*{Clause Splitting}
+Long parenthetical enumerations (e.g.\ \textit{``Responsibilities include: (a)
+filing reports, (b) attending meetings, (c) maintaining records''}) are sometimes
+split at the enumeration markers rather than treated as a single obligation list.
+Additionally, nested coordinating structures where an inner \texttt{CC} lacks a
+clear local subject can produce over-splitting, creating non-sentential fragments
+that should have been pruned but pass the two-token length guard.
+
+\subsection*{NP Chunking}
+Prepositional attachment ambiguity affects chunks for expressions such as
+\textit{``payment of \$5,000 per month''}; depending on spaCy's parse, the PP
+\textit{of \$5,000 per month} may be partially incorporated into the NP span,
+inflating the chunk boundary.  Appositive NPs (e.g.\ \textit{``the Employer,
+ABC Corp.''}) are treated as two separate chunks rather than one co-referential
+span.
+
+\subsection*{Dependency Parsing}
+Passive-voice legal constructions (\textit{``shall be deemed to constitute a
+material breach''}) and modal stacks (\textit{``shall have the right to terminate''})
+sometimes produce unusual ROOT assignments.  In the latter example, spaCy may
+select \textit{have} rather than \textit{terminate} as ROOT, misrepresenting the
+logical predicate.
+
+\subsection*{Named Entity Recognition}
+The rule-based fallback misses multi-word party names that do not match known
+patterns (e.g.\ \textit{``ABC International Co., Ltd.''} with trailing legal
+suffixes).  Legal-BERT occasionally confuses RATE and MONEY labels for monetary
+amounts that appear without explicit percentage signs (e.g.\ \textit{``at a rate
+of three dollars per day''}).
+
+\subsection*{Semantic Role Labelling}
+The dependency-tree approach extracts roles only from the ROOT predicate, so
+sentences with multiple verbs (e.g.\ \textit{``The Employer shall have the
+obligation to pay and report''}) yield roles for only one predicate.  Stacked modal
+constructions (\textit{``shall have the obligation to pay''}) cause the embedded
+verb \textit{pay} to be missed as a secondary predicate entirely.
+
+\subsection*{Intent Classification}
+The word \textit{shall} in rights clauses (\textit{``Party A shall have the right
+to inspect the premises''}) is misclassified as Obligation by both models because
+\textit{shall} is the dominant Obligation indicator in the training data.  BERT
+exhibits higher confidence on these errors, which is more dangerous than the
+correctly low-confidence predictions from TF-IDF on the same clauses.
+
+\section{Future Work}
+\label{sec:future-work}
+
+\subsection*{Clause Splitting}
+Training a neural sentence-pair model (e.g.\ fine-tuned BERT) to classify whether
+two consecutive clauses should be merged would address the enumeration-splitting
+problem.  Enumerated list items (items starting with \textit{(a)}, \textit{(b)},
+\textit{(i)}, etc.) should be detected by a pre-processing rule and treated as
+atomic units before dependency-based splitting is applied.
+
+\subsection*{Named Entity Recognition}
+Annotating a larger domain-specific dataset with the six-entity schema would
+substantially improve generalisation.  Exploring publicly available legal NER
+benchmarks --- such as LexNER~\cite{luz2021lextreme} or CUAD~\cite{hendrycks2021cuad}
+--- could provide additional fine-tuning signal.  Incorporation of a gazetteer for
+known company-name suffixes (\textit{Ltd., Corp., S.A., GmbH}) would improve
+recall for multi-token PARTY entities.
+
+\subsection*{Semantic Role Labelling}
+Integrating a proper BERT-based SRL model (e.g.\ AllenNLP's structured-prediction
+SRL or a PropBank-fine-tuned sequence labeller) would handle multi-predicate
+sentences and complex nested argument structures that the current dependency-tree
+approach cannot resolve.
+
+\subsection*{Intent Classification}
+Adding a fifth class --- \textbf{Definition} --- for clauses that define terms
+(e.g.\ \textit{``\,`Business Day' means any day other than a Saturday\ldots''})
+would reduce label noise in the current four-class setting.  Experimenting with
+legal domain-specific pre-training --- such as ContractBERT or LegalBERT variants
+trained on larger contract corpora --- may further improve accuracy, particularly
+on boundary cases between Right and Obligation.
+
+\subsection*{RAG Chatbot}
+Several enhancements would improve retrieval quality and answer fidelity: (i)
+adding a cross-encoder re-ranker~\cite{nogueira2019passage} on top of the initial
+top-$k$ retrieval to improve precision; (ii) extending the citation mechanism to
+include precise character offsets rather than clause indices; (iii) supporting
+multi-document contracts with document-level metadata filters; and (iv) evaluating
+the chatbot's faithfulness and relevance using automated RAG evaluation frameworks
+such as RAGAS~\cite{es2024ragas}.
+
+\newpage
+\begin{thebibliography}{9}
+
+\bibitem{chalkidis2020legal}
+I.~Chalkidis, M.~Fergadiotis, P.~Malakasiotis, N.~Aletras, and I.~Androutsopoulos,
+\textit{LEGAL-BERT: The Muppets straight out of Law School},
+in \textit{Findings of EMNLP 2020}, pp.\ 2898--2904, 2020.
+
+\bibitem{hendrycks2021cuad}
+D.~Hendrycks, C.~Burns, A.~Chen, and S.~Ball,
+\textit{CUAD: An Expert-Annotated NLP Dataset for Legal Contract Review},
+\textit{arXiv:2103.06268}, 2021.
+
+\bibitem{luz2021lextreme}
+P.~de~Araujo~Luz~de~Araujo, C.~Niklaus, and M.~Stürmer,
+\textit{LEXTREME: A Multi-Lingual and Multi-Task Benchmark for the Legal Domain},
+\textit{arXiv:2301.13126}, 2021.
+
+\bibitem{nogueira2019passage}
+R.~Nogueira and K.~Cho,
+\textit{Passage Re-ranking with BERT},
+\textit{arXiv:1901.04085}, 2019.
+
+\bibitem{es2024ragas}
+S.~Es, J.~James, L.~Espinosa-Anke, and S.~Schockaert,
+\textit{RAGAS: Automated Evaluation of Retrieval Augmented Generation},
+in \textit{EACL 2024}, 2024.
+
+\end{thebibliography}
+
+\end{document}

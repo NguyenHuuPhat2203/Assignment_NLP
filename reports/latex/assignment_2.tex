@@ -1,0 +1,315 @@
+\documentclass[assignment.tex]{subfiles}
+\begin{document}
+
+\chapter{Assignment 2: Semantic Extraction}
+\label{sec:assignment2}
+
+Building on the syntactic pipeline of Assignment~1, this stage extracts
+\emph{semantic} information from each clause: named entities that identify the
+parties, values, and legal references involved; semantic roles that describe who
+does what to whom; and an intent label that captures the functional type of the
+clause.
+
+\section{Custom Named Entity Recognition (NER)}
+\label{subsec:ner}
+
+\subsection{Entity Schema}
+
+Six domain-specific entity types are defined for legal contract NER:
+
+\begin{itemize}[leftmargin=*, itemsep=3pt]
+    \item \textbf{PARTY} — contracting parties and organisations
+          (e.g.\ \textit{Party A}, \textit{ABC International Co., Ltd.}).
+    \item \textbf{MONEY} — monetary amounts with or without currency symbols
+          (e.g.\ \textit{USD 10,000}, \textit{\$5,000}).
+    \item \textbf{DATE} — absolute and relative date expressions
+          (e.g.\ \textit{05 May 2024}, \textit{within 30 days}).
+    \item \textbf{RATE} — percentage or per-unit rates
+          (e.g.\ \textit{1\% per month}, \textit{2\% per annum}).
+    \item \textbf{PENALTY} — penalty clauses and liquidated-damages expressions.
+    \item \textbf{LAW} — statutory references, ordinances, and legal codes
+          (e.g.\ \textit{Civil Code 2015}).
+\end{itemize}
+
+The full BIO label set used during model training is:
+\begin{center}
+    \texttt{O, B-PARTY, I-PARTY, B-MONEY, I-MONEY, B-DATE, I-DATE,
+    B-RATE, I-RATE, B-PENALTY, I-PENALTY, B-LAW, I-LAW}
+\end{center}
+
+\subsection{Model Architecture}
+
+\paragraph{Primary model — Legal-BERT fine-tuned NER.}
+The primary model fine-tunes
+\texttt{nlpaueb/legal-bert-base-uncased}~\cite{chalkidis2020legal}
+for token classification using the HuggingFace \texttt{Trainer} API.
+Key training hyperparameters are summarised in
+Table~\ref{tab:ner-hparams}.
+
+\begin{table}[H]
+    \centering
+    \caption{Legal-BERT NER training configuration.}
+    \label{tab:ner-hparams}
+    \begin{tabular}{@{}ll@{}}
+        \toprule
+        \textbf{Hyperparameter} & \textbf{Value} \\
+        \midrule
+        Base model           & \texttt{nlpaueb/legal-bert-base-uncased} \\
+        Epochs               & 3 \\
+        Learning rate        & $2 \times 10^{-5}$ \\
+        Batch size           & 8 \\
+        Train/eval split     & 90\,/\,10 \\
+        Evaluation metric    & seqeval (entity-level F1) \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\paragraph{Fallback — Rule-based NER.}
+When Legal-BERT confidence falls below a configurable threshold, a
+\texttt{RuleBasedNER} module is invoked.  It applies hand-crafted regular
+expressions tailored to each entity type — for example, monetary patterns of the
+form \texttt{(USD|VND|\textbackslash\$)\textbackslash s*[\textbackslash
+d,]+} for MONEY, and ISO-format or natural-language date patterns for DATE.
+
+\subsection{Output Format}
+
+Results are written to \texttt{output/ner\_results.json} as a list of objects:
+
+\begin{lstlisting}[style=jsonStyle,
+                   caption={NER output format (abbreviated).},
+                   label={lst:ner-json}]
+[
+  {
+    "clause_id": 0,
+    "text": "Party A shall pay Party B USD 10,000 by 05 May 2024...",
+    "entities": [
+      {"text": "Party A",     "label": "PARTY",  "start":  0, "end":  7},
+      {"text": "Party B",     "label": "PARTY",  "start": 16, "end": 23},
+      {"text": "USD 10,000",  "label": "MONEY",  "start": 24, "end": 34},
+      {"text": "05 May 2024", "label": "DATE",   "start": 38, "end": 49},
+      {"text": "1% per month","label": "RATE",   "start": 53, "end": 65}
+    ]
+  }
+]
+\end{lstlisting}
+
+\subsection{NER Example}
+
+Table~\ref{tab:ner-example} shows the entities extracted from a representative
+legal clause.
+
+\begin{table}[H]
+    \centering
+    \caption{Entities extracted from \textit{``Party A shall pay Party B USD 10,000
+    by 05 May 2024 at 1\% per month penalty rate.''}}
+    \label{tab:ner-example}
+    \begin{tabular}{@{}llrr@{}}
+        \toprule
+        \textbf{Entity Text} & \textbf{Label} & \textbf{Start} & \textbf{End} \\
+        \midrule
+        Party A      & PARTY  &  0 &  7 \\
+        Party B      & PARTY  & 16 & 23 \\
+        USD 10,000   & MONEY  & 24 & 34 \\
+        05 May 2024  & DATE   & 38 & 49 \\
+        1\% per month & RATE  & 53 & 65 \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\section{Semantic Role Labelling (SRL)}
+\label{subsec:srl}
+
+\subsection{Approach}
+
+Rather than a dedicated BERT-based SRL model, the system uses a
+\emph{dependency-tree-based} approach built on top of spaCy's
+\texttt{en\_core\_web\_sm} parser.  For each clause, the \texttt{ROOT} token
+(typically the main verb) is identified as the predicate, and semantic roles are
+assigned to its dependents by mapping Universal Dependencies labels to
+PropBank-style argument roles, as shown in Table~\ref{tab:srl-mapping}.
+
+\begin{table}[H]
+    \centering
+    \caption{Mapping from Universal Dependencies labels to semantic roles.}
+    \label{tab:srl-mapping}
+    \begin{tabular}{@{}lll@{}}
+        \toprule
+        \textbf{UD Dependency Label} & \textbf{Semantic Role} & \textbf{Notes} \\
+        \midrule
+        \texttt{nsubj}              & Agent      & Active-voice subject \\
+        \texttt{nsubjpass}          & Theme      & Passive-voice subject \\
+        \texttt{dobj} / \texttt{obj}& Theme      & Direct object \\
+        \texttt{iobj}               & Recipient  & Indirect object \\
+        \texttt{prep} (to-)         & Recipient  & Prepositional recipient \\
+        Temporal prepositions       & Time       & \texttt{prep} with time head \\
+        \texttt{advcl} + cond.\ mark& Condition  & Subordinate conditional clause \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\subsection{Output Format}
+
+Results are written to \texttt{output/srl\_results.json} as a list of objects with
+the following structure:
+
+\begin{lstlisting}[style=jsonStyle,
+                   caption={SRL output format.},
+                   label={lst:srl-json}]
+[
+  {
+    "clause_id": 0,
+    "text": "The Employer shall pay the Employee the monthly salary ...",
+    "predicate": "pay",
+    "roles": {
+      "Agent":     "The Employer",
+      "Theme":     "the monthly salary",
+      "Recipient": "the Employee",
+      "Time":      "within 30 days"
+    }
+  }
+]
+\end{lstlisting}
+
+\subsection{SRL Example}
+
+\noindent\textbf{Input:}
+\begin{quote}
+    \textit{``The Employer shall pay the Employee the monthly salary within 30 days.''}
+\end{quote}
+
+\noindent\textbf{Output:}
+\begin{quote}
+\begin{tabular}{@{}ll@{}}
+    Predicate: & \textit{pay} \\
+    Agent:     & \textit{The Employer} \\
+    Theme:     & \textit{the monthly salary} \\
+    Recipient: & \textit{the Employee} \\
+    Time:      & \textit{within 30 days} \\
+\end{tabular}
+\end{quote}
+
+The ROOT token \textit{pay} is the predicate.  \textit{The Employer} is the active
+nominal subject (\texttt{nsubj}) mapped to Agent; \textit{the monthly salary} is the
+direct object (\texttt{dobj}) mapped to Theme; \textit{the Employee} is reached via
+the indirect object (\texttt{iobj}) relation mapped to Recipient; and
+\textit{within 30 days} is a temporal prepositional phrase mapped to Time.
+
+\section{Intent Classification}
+\label{subsec:intent}
+
+\subsection{Task Definition and Label Set}
+
+Intent classification assigns each clause one of four functional intent labels:
+
+\begin{itemize}[leftmargin=*, itemsep=2pt]
+    \item \textbf{Obligation} — a party is required to perform an action
+          (keywords: \textit{shall, must, is obligated to}).
+    \item \textbf{Prohibition} — an action is forbidden
+          (keywords: \textit{shall not, must not, is prohibited}).
+    \item \textbf{Right} — a party is entitled to perform an action
+          (keywords: \textit{may, has the right to, is entitled to}).
+    \item \textbf{Termination Condition} — the contract terminates upon an event
+          (keywords: \textit{terminates, expires, is terminated upon/if}).
+\end{itemize}
+
+A priority order — Prohibition $>$ Termination Condition $>$ Right $>$ Obligation
+— is used to resolve clauses matching multiple keyword patterns during weak-label
+generation.
+
+\subsection{Model 1 — TF-IDF + Logistic Regression}
+
+Training labels are generated by a keyword-regex weak labeller.  A TF-IDF
+vectoriser converts each clause to a feature vector, and a Logistic Regression
+classifier is trained on these vectors.  Table~\ref{tab:tfidf-config} summarises
+the configuration.
+
+\begin{table}[H]
+    \centering
+    \caption{TF-IDF + Logistic Regression configuration.}
+    \label{tab:tfidf-config}
+    \begin{tabular}{@{}ll@{}}
+        \toprule
+        \textbf{Component} & \textbf{Setting} \\
+        \midrule
+        \multicolumn{2}{@{}l}{\textit{TfidfVectorizer}} \\
+        \quad n-gram range   & $(1, 3)$ \\
+        \quad max features   & 5\,000 \\
+        \quad sublinear TF   & \texttt{True} \\[4pt]
+        \multicolumn{2}{@{}l}{\textit{LogisticRegression}} \\
+        \quad Regularisation $C$  & 1.0 \\
+        \quad Solver         & \texttt{lbfgs} \\
+        \quad Multi-class    & \texttt{multinomial} \\
+        \quad Max iterations & 1\,000 \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\subsection{Model 2 — Fine-tuned BERT}
+
+The second classifier fine-tunes \texttt{bert-base-uncased} as a sequence
+classifier using \texttt{AutoModelForSequenceClassification}.
+Table~\ref{tab:bert-intent-config} summarises training settings.
+
+\begin{table}[H]
+    \centering
+    \caption{BERT intent classification training configuration.}
+    \label{tab:bert-intent-config}
+    \begin{tabular}{@{}ll@{}}
+        \toprule
+        \textbf{Hyperparameter} & \textbf{Value} \\
+        \midrule
+        Base model       & \texttt{bert-base-uncased} \\
+        Epochs           & 3 \\
+        Learning rate    & $2 \times 10^{-5}$ \\
+        Max token length & 256 \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\subsection{Output Format}
+
+Results are written to \texttt{intent\_classification.txt} as a TSV
+file with columns \texttt{clause\_text}, \texttt{tfidf\_label},
+\texttt{bert\_label}, and \texttt{confidence}.
+
+\subsection{Comparative Example}
+
+Table~\ref{tab:intent-example} compares the predictions of both models on
+representative clauses.
+
+\begin{table}[H]
+    \centering
+    \caption{Intent classification results for sample clauses.}
+    \label{tab:intent-example}
+    {\small
+    \begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}p{3.8cm}>{\raggedright\arraybackslash}p{2.0cm}>{\raggedright\arraybackslash}Xr@{}}
+        \toprule
+        \textbf{Clause Excerpt} & \textbf{TF-IDF} & \textbf{BERT} & \textbf{Conf.} \\
+        \midrule
+        \textit{``\ldots shall pay\ldots} & Obligation & Obligation & 0.96 \\
+        \textit{``\ldots shall not disclose\ldots} & Prohibition & Prohibition & 0.98 \\
+        \textit{``\ldots may terminate\ldots} & Right & Termination condition & 0.72 \\
+        \textit{``\ldots terminates upon breach\ldots} & Termination condition & Termination condition & 0.95 \\
+        \bottomrule
+    \end{tabularx}
+    }
+\end{table}
+
+The \textit{``may terminate''} clause illustrates a common ambiguity: TF-IDF's
+n-gram features weight \textit{may} heavily toward the Right class, while BERT's
+contextual representation captures the termination semantics of the full phrase
+and predicts Termination Condition.  The lower confidence score (0.72) correctly
+signals the model's uncertainty on this boundary case.
+
+\ifSubfilesClassLoaded{
+\begin{thebibliography}{1}
+
+\bibitem{chalkidis2020legal}
+I.~Chalkidis, M.~Fergadiotis, P.~Malakasiotis, N.~Aletras, and I.~Androutsopoulos,
+\textit{LEGAL-BERT: The Muppets straight out of Law School},
+in \textit{Findings of EMNLP 2020}, pp.\ 2898--2904, 2020.
+
+\end{thebibliography}
+}{}
+
+\end{document}

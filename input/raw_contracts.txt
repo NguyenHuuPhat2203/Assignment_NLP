@@ -1,0 +1,240 @@
+SOFTWARE SERVICES AGREEMENT
+
+This Software Services Agreement ("Agreement") is entered into as of the 1st day of March, 2024 ("Effective Date"), by and between:
+
+TechVision Solutions Pte. Ltd., a company duly incorporated under the laws of Singapore, having its registered office at 45 Innovation Drive, Singapore 138670 ("Service Provider" or "Party A");
+
+AND
+
+Meridian Financial Group Corp., a corporation organized and existing under the laws of the State of Delaware, United States, having its principal place of business at 200 Commerce Boulevard, Suite 500, Wilmington, DE 19801 ("Client" or "Party B").
+
+Party A and Party B are hereinafter individually referred to as a "Party" and collectively as the "Parties."
+
+WHEREAS, Party A is engaged in the business of providing software development, maintenance, and consulting services;
+
+WHEREAS, Party B desires to engage Party A to provide certain software services as described herein;
+
+WHEREAS, Party A is willing to provide such services subject to the terms and conditions set forth in this Agreement;
+
+NOW, THEREFORE, in consideration of the mutual covenants and agreements contained herein, and for other good and valuable consideration, the receipt and sufficiency of which are hereby acknowledged, the Parties agree as follows:
+
+ARTICLE 1 — DEFINITIONS
+
+1.1 "Services" means all software development, integration, maintenance, and support services to be performed by Party A for Party B as described in Schedule A attached hereto and incorporated herein by reference.
+
+1.2 "Deliverables" means all software, code, documentation, reports, and other work product produced by Party A in the course of performing the Services.
+
+1.3 "Confidential Information" means any non-public information disclosed by one Party to the other Party, either directly or indirectly, in writing, orally, or by inspection of tangible objects, that is designated as confidential or that reasonably should be understood to be confidential given the nature of the information and the circumstances of disclosure.
+
+1.4 "Intellectual Property Rights" means all patents, copyrights, trademarks, trade secrets, and other proprietary rights recognized under Law No. 50/2005/QH11 on Intellectual Property, whether registered or unregistered, and all applications for any of the foregoing.
+
+1.5 "Force Majeure Event" means any event beyond the reasonable control of the affected Party, including but not limited to acts of God, natural disasters, war, terrorism, civil unrest, government actions, or failures of third-party infrastructure.
+
+1.6 "Business Day" means any day other than a Saturday, Sunday, or a public holiday in Singapore or the United States.
+
+ARTICLE 2 — SCOPE OF SERVICES
+
+2.1 Party A shall perform the Services in accordance with the specifications set forth in Schedule A and shall deliver all Deliverables to Party B within the timeframes specified therein.
+
+2.2 Party A shall assign qualified personnel to perform the Services and shall ensure that all personnel engaged in the performance of the Services possess the necessary skills, qualifications, and experience required under this Agreement.
+
+2.3 Party A shall complete each milestone set forth in Schedule B within the timeframes specified therein, provided that Party B has fulfilled its obligations under Article 4 of this Agreement.
+
+2.4 If Party A is unable to meet a milestone deadline due to circumstances within its reasonable control, Party A shall notify Party B in writing within three (3) Business Days of becoming aware of the delay, and the Parties shall negotiate in good faith to revise the applicable milestone schedule.
+
+2.5 Party A may subcontract portions of the Services to qualified third-party vendors, provided that Party A shall remain primarily responsible for the performance of such subcontracted Services and shall obtain prior written consent from Party B before engaging any subcontractor.
+
+2.6 Unless Party B provides written approval, Party A shall not make any material changes to the scope, approach, or methodology of the Services as defined in Schedule A.
+
+2.7 Party A must maintain professional indemnity insurance of not less than $2,000,000 USD throughout the Term and shall provide Party B with evidence of such insurance within five (5) Business Days of a written request.
+
+ARTICLE 3 — FEES AND PAYMENT
+
+3.1 In consideration for the Services, Party B shall pay Party A a total project fee of $150,000 USD (one hundred fifty thousand United States Dollars), payable in installments as set forth in Schedule C.
+
+3.2 Party B shall remit the initial payment of $30,000 USD within fifteen (15) Business Days of the Effective Date of this Agreement.
+
+3.3 Party B shall pay each subsequent installment within thirty (30) days of receiving a valid invoice from Party A, provided that the corresponding milestone has been completed and accepted in accordance with the acceptance procedure in Article 5.
+
+3.4 If Party B fails to make any payment when due, Party B shall be required to pay a late payment penalty equal to one and a half percent (1.5%) per month on the outstanding amount, calculated from the date payment was due until the date full payment is received by Party A.
+
+3.5 Party B must notify Party A in writing of any disputed invoice within ten (10) Business Days of receipt. If Party B does not dispute an invoice within such period, Party B shall be deemed to have accepted the invoice as accurate and shall be required to pay the full amount stated therein.
+
+3.6 All fees stated in this Agreement are exclusive of any applicable taxes. Party B shall be responsible for paying all applicable taxes imposed on the Services by any relevant taxing authority, including value-added tax arising under Law No. 13/2008/QH12 on Value-Added Tax.
+
+3.7 Party A is entitled to suspend the provision of Services if any undisputed amount remains unpaid for more than forty-five (45) days beyond the due date, without prejudice to any other rights or remedies Party A may have under this Agreement or applicable law.
+
+3.8 Party A is entitled to charge interest at the statutory rate prescribed by Circular No. 05/2017/TT-BTC on any amounts outstanding beyond sixty (60) days.
+
+3.9 Party B shall not withhold payment of any undisputed fees on account of any counterclaim, set-off, or deduction, except as expressly permitted under this Agreement.
+
+ARTICLE 4 — CLIENT OBLIGATIONS
+
+4.1 Party B shall provide Party A with timely access to all systems, data, documentation, personnel, and facilities reasonably necessary for Party A to perform the Services.
+
+4.2 Party B must designate a primary point of contact ("Client Representative") who shall have authority to provide instructions, approvals, and decisions on behalf of Party B within two (2) Business Days of the Effective Date.
+
+4.3 Party B shall review and provide written feedback on all Deliverables submitted for review within ten (10) Business Days of receipt. If Party B fails to provide feedback within such period, the Deliverable shall be deemed accepted unless it contains material defects that were not reasonably discoverable upon reasonable inspection.
+
+4.4 Party B shall not make any modifications, alterations, or enhancements to any Deliverable without prior written consent from Party A, provided that such consent shall not be unreasonably withheld or delayed.
+
+4.5 Party B is entitled to request changes to the scope of the Services, subject to the change management procedure set forth in Article 6.
+
+4.6 Party B must not disclose any of Party A's proprietary tools, methodologies, or frameworks to any competitor of Party A, and such disclosure is expressly prohibited under this Agreement and under Article 39 of the Commercial Law No. 36/2005/QH11.
+
+ARTICLE 5 — ACCEPTANCE TESTING
+
+5.1 Upon completion of each Deliverable, Party A shall provide written notice to Party B that the Deliverable is ready for acceptance testing.
+
+5.2 Party B shall complete acceptance testing within fifteen (15) Business Days of receiving notice under Article 5.1. If Party B fails to complete acceptance testing within such period, the Deliverable shall be deemed accepted.
+
+5.3 If Party B determines that a Deliverable does not conform to the specifications set forth in Schedule A, Party B must provide Party A with a written defect report within the acceptance testing period, specifying in reasonable detail the nature of each non-conformity.
+
+5.4 Party A shall remedy any confirmed non-conformities within fifteen (15) Business Days of receiving a valid defect report, provided that such non-conformities are attributable to errors in Party A's performance of the Services.
+
+5.5 If Party A and Party B are unable to agree on whether a purported non-conformity constitutes a breach of the specifications, either Party may refer the matter to an independent technical expert agreed upon by the Parties, whose determination shall be final and binding. The costs of such expert shall be borne equally by the Parties unless the expert determines that one Party acted unreasonably, in which case the costs shall be borne by that Party.
+
+ARTICLE 6 — INTELLECTUAL PROPERTY
+
+6.1 Subject to full and timely payment of all fees due under this Agreement, all Deliverables created specifically for Party B under this Agreement shall be assigned to Party B upon acceptance, and Party B shall own all Intellectual Property Rights therein.
+
+6.2 Party A retains all Intellectual Property Rights in its pre-existing tools, methodologies, frameworks, and general-purpose software components ("Party A Background IP"). Party A hereby grants Party B a non-exclusive, non-transferable, royalty-free license to use Party A Background IP solely to the extent embedded in the Deliverables and solely for Party B's internal business purposes.
+
+6.3 Party B shall not sublicense, assign, transfer, or otherwise dispose of any rights in Party A Background IP without prior written consent from Party A.
+
+6.4 Party B must not reverse engineer, decompile, disassemble, or otherwise attempt to derive the source code of any Party A Background IP, and such activity is expressly prohibited under the Software Liability Act Article 7 and Law No. 50/2005/QH11 Article 22.
+
+ARTICLE 7 — CONFIDENTIALITY
+
+7.1 Each Party shall hold in strict confidence all Confidential Information received from the other Party and shall not disclose such Confidential Information to any third party without the prior written consent of the disclosing Party.
+
+7.2 Each Party may disclose Confidential Information only to its employees, officers, directors, and professional advisors who have a need to know such information for the purposes of this Agreement and who are bound by confidentiality obligations no less restrictive than those contained herein.
+
+7.3 The obligations of confidentiality under this Article shall not apply to information that: (a) is or becomes publicly available through no fault of the receiving Party; (b) was already known to the receiving Party at the time of disclosure; or (c) is required to be disclosed by applicable law or court order, provided that the receiving Party shall promptly notify the disclosing Party and cooperate in seeking a protective order.
+
+7.4 The confidentiality obligations under this Article shall survive the termination or expiry of this Agreement for a period of five (5) years.
+
+7.5 A Party that is required to disclose Confidential Information by law must provide the other Party with at least ten (10) Business Days' written notice prior to such disclosure, unless such notice is prohibited by the applicable law or court order.
+
+ARTICLE 8 — REPRESENTATIONS AND WARRANTIES
+
+8.1 Party A represents and warrants that: (a) it has full power and authority to enter into this Agreement and to perform its obligations hereunder; (b) the Services shall be performed in a professional and workmanlike manner consistent with industry standards; (c) the Deliverables, when accepted, shall conform to the specifications in Schedule A for ninety (90) days following delivery; and (d) Party A's performance of the Services shall not infringe any third-party Intellectual Property Rights.
+
+8.2 Party B represents and warrants that: (a) it has full power and authority to enter into this Agreement; (b) all data and materials provided to Party A are accurate and complete to the best of Party B's knowledge; and (c) Party B's use of the Deliverables shall comply with all applicable laws and regulations, including the Personal Data Protection Act and Decree No. 13/2023/ND-CP on personal data protection.
+
+ARTICLE 9 — LIMITATION OF LIABILITY
+
+9.1 In no event shall either Party be liable to the other for any indirect, incidental, consequential, special, exemplary, or punitive damages arising out of or related to this Agreement, including loss of profits, loss of revenue, or loss of data, even if such Party has been advised of the possibility of such damages.
+
+9.2 The aggregate liability of either Party under this Agreement shall not exceed the total fees paid or payable by Party B to Party A in the twelve (12) months immediately preceding the event giving rise to the liability, which amount shall in no case exceed $180,000 USD.
+
+9.3 The limitations of liability in this Article shall not apply to: (a) damages arising from willful misconduct or gross negligence; (b) breaches of Article 7 (Confidentiality); or (c) Party B's obligation to pay fees.
+
+ARTICLE 10 — TERM AND TERMINATION
+
+10.1 This Agreement shall commence on the Effective Date and shall continue in full force and effect until the completion of all Services and delivery and acceptance of all Deliverables, unless earlier terminated in accordance with this Article ("Term").
+
+10.2 Either Party may terminate this Agreement upon thirty (30) days' prior written notice to the other Party if the other Party commits a material breach of this Agreement and fails to cure such breach within thirty (30) days of receiving written notice specifying the breach in reasonable detail.
+
+10.3 Either Party may terminate this Agreement immediately upon written notice to the other Party if: (a) the other Party becomes insolvent, makes a general assignment for the benefit of creditors, or becomes subject to bankruptcy, liquidation, or receivership proceedings; or (b) the other Party engages in fraudulent conduct in connection with this Agreement.
+
+10.4 Party B is entitled to terminate this Agreement for convenience upon sixty (60) days' written notice to Party A, provided that Party B shall pay Party A for all Services performed and expenses reasonably incurred up to the effective date of termination, plus a termination fee equal to fifteen percent (15%) of the remaining unpaid project fees.
+
+10.5 Party A may terminate this Agreement immediately and without notice if Party B engages in any activity that is prohibited under applicable anti-bribery or anti-corruption laws, including but not limited to the United Nations Convention against Corruption and Law No. 87/2015/QH13 on Anti-Corruption.
+
+10.6 Upon termination or expiry of this Agreement, each Party shall promptly return or destroy all Confidential Information of the other Party, and Party A shall deliver to Party B all completed or partially completed Deliverables together with all associated documentation.
+
+10.7 Termination of this Agreement shall not relieve either Party of obligations that have accrued prior to the effective date of termination, and Articles 6, 7, 8, 9, 10.6, and 12 shall survive the termination or expiry of this Agreement.
+
+ARTICLE 11 — FORCE MAJEURE
+
+11.1 Neither Party shall be liable for any failure or delay in performing its obligations under this Agreement to the extent such failure or delay is caused by a Force Majeure Event, provided that the affected Party shall notify the other Party in writing within five (5) Business Days of the occurrence of the Force Majeure Event and shall use commercially reasonable efforts to mitigate the impact of such event.
+
+11.2 If a Force Majeure Event continues for more than sixty (60) consecutive days, either Party may terminate this Agreement upon fifteen (15) days' written notice without liability, except for payment obligations accrued prior to the Force Majeure Event.
+
+ARTICLE 12 — DISPUTE RESOLUTION
+
+12.1 In the event of any dispute, controversy, or claim arising out of or relating to this Agreement, the Parties shall first attempt to resolve the dispute through good faith negotiation between senior representatives of each Party within thirty (30) days of one Party providing written notice to the other Party identifying the dispute in writing.
+
+12.2 If the dispute is not resolved through negotiation within such thirty (30) day period, either Party may refer the dispute to binding arbitration under the Rules of the Singapore International Arbitration Centre (SIAC), and the arbitration shall be conducted in the English language in Singapore. The arbitrator's award shall be final and binding upon the Parties.
+
+12.3 Notwithstanding the foregoing, either Party is entitled to seek interim or emergency injunctive relief from a court of competent jurisdiction to prevent irreparable harm pending the resolution of a dispute, without first exhausting the negotiation or arbitration procedures set forth in this Article.
+
+ARTICLE 13 — GENERAL PROVISIONS
+
+13.1 This Agreement shall be governed by and construed in accordance with the laws of Singapore, without regard to its conflict of laws principles.
+
+13.2 No amendment or modification of this Agreement shall be binding unless made in writing and duly signed by authorized representatives of both Parties.
+
+13.3 Neither Party may assign this Agreement or any rights or obligations hereunder without the prior written consent of the other Party, except that either Party may assign this Agreement to a successor entity in connection with a merger or acquisition, provided that the assignee assumes all obligations of the assigning Party hereunder.
+
+13.4 This Agreement constitutes the entire agreement between the Parties with respect to its subject matter and supersedes all prior negotiations, representations, warranties, and understandings, whether written or oral.
+
+IN WITNESS WHEREOF, the Parties have executed this Agreement as of the date first written above.
+
+TECHVISION SOLUTIONS PTE. LTD.              MERIDIAN FINANCIAL GROUP CORP.
+By: ____________________________             By: ____________________________
+Name: Alexandra Chen                         Name: Robert J. Patterson
+Title: Chief Executive Officer              Title: Chief Technology Officer
+Date: March 1, 2024                          Date: March 1, 2024
+
+SCHEDULE A — SCOPE OF SERVICES
+
+Phase 1: Requirements Analysis (Weeks 1-4). Party A shall conduct detailed requirements gathering sessions with Party B's technical team, produce a System Requirements Specification, and design the system architecture.
+
+Phase 2: Core Development (Weeks 5-16). Party A shall develop the core software modules in accordance with the approved System Requirements Specification, including the data ingestion pipeline, processing engine, and API layer.
+
+Phase 3: Integration and Testing (Weeks 17-20). Party A shall integrate all modules, conduct unit testing, integration testing, and user acceptance testing support.
+
+Phase 4: Deployment and Handover (Weeks 21-24). Party A shall deploy the software to Party B's production environment and provide training and documentation.
+
+SCHEDULE B — MILESTONE SCHEDULE AND PAYMENT TRIGGERS
+
+Milestone 1: System Requirements Specification delivered and approved — $30,000 USD — due by Week 4.
+Milestone 2: Core modules development complete — $50,000 USD — due by Week 16.
+Milestone 3: Integration and testing complete — $40,000 USD — due by Week 20.
+Milestone 4: Deployment and final handover — $30,000 USD — due by Week 24.
+
+SCHEDULE C — PENALTY AND LIQUIDATED DAMAGES
+
+1. If Party A fails to deliver any Milestone within the agreed timeline without an approved change order or Force Majeure Event, Party B shall be entitled to a delay penalty of $500 USD per Business Day for the first ten (10) Business Days of delay, and $1,000 USD per Business Day thereafter, up to a maximum aggregate penalty of $15,000 USD.
+
+2. If the total delay exceeds thirty (30) Business Days, Party B may terminate the Agreement under Article 10.2 and shall be entitled to recover all amounts paid as liquidated damages, in addition to any direct damages proven, subject to the limitation of liability in Article 9.2.
+
+3. Any penalty amounts not paid within fifteen (15) days of the date on which they become due shall accrue interest at a rate of 250,000 VND per day until fully settled, as provided under Decree No. 122/2021/ND-CP on administrative penalties in the financial sector.
+
+ADDENDUM 1 — EMPLOYMENT TERMS FOR SECONDED PERSONNEL
+
+This Addendum supplements the Agreement and governs the terms under which Party A may second certain employees ("Seconded Employees") to Party B's premises for the purpose of performing on-site Services.
+
+A1.1 The Employer (Party A) shall retain full employment responsibility over all Seconded Employees, including payment of salaries, social insurance contributions, and any other employment entitlements required under the Labor Code of Vietnam No. 45/2019/QH14 ("Labor Code").
+
+A1.2 The Employee (each Seconded Employee) must comply with Party B's workplace policies, safety procedures, and codes of conduct while on Party B's premises, provided that such policies do not conflict with the Employee's employment agreement with Party A or with any applicable law.
+
+A1.3 The Employee is entitled to rest breaks, annual leave, and statutory public holidays in accordance with Articles 112 and 113 of the Labor Code, and the Employer must not require the Employee to forfeit any such entitlements.
+
+A1.4 The Employee shall not, during the period of secondment or for a period of twelve (12) months after its conclusion, directly solicit or accept employment from Party B or any of its affiliates without prior written consent from Party A, and a breach of this obligation shall entitle Party A to liquidated damages of 50,000,000 VND (fifty million Vietnamese Dong).
+
+A1.5 The Employer must ensure that Seconded Employees hold all professional certifications and work authorizations required by applicable law within thirty (30) days of the commencement of the secondment. If the Employer fails to comply with this obligation, Party B is entitled to require immediate replacement of the relevant Seconded Employee at no additional cost.
+
+A1.6 Subject to Article A1.5, the Lessor (Party B, in its capacity as the premises provider) shall ensure that the physical workspace made available to Seconded Employees meets the occupational health and safety standards prescribed under Law No. 84/2015/QH13 on Occupational Safety and Hygiene.
+
+A1.7 The Lessee (Party A, in its capacity as occupier of the workspace) must not make any structural alterations to Party B's premises without prior written approval from Party B, and any unauthorized alterations are expressly prohibited and must be remediated at Party A's cost within ten (10) Business Days of receiving written notice from Party B.
+
+A1.8 Unless otherwise agreed in writing, the secondment of any Employee shall not exceed a cumulative period of twenty-four (24) months, as required by Article 53 of the Labor Code.
+
+A1.9 Party B is entitled to request the withdrawal of any Seconded Employee upon five (5) Business Days' written notice if that Employee's conduct, performance, or continued presence on Party B's premises poses a material risk to Party B's operations, security, or regulatory compliance, provided that such request shall be accompanied by a written statement of reasons.
+
+A1.10 The Employer shall maintain workers' compensation insurance covering all Seconded Employees in an amount not less than 10,000,000 VND (ten million Vietnamese Dong) per incident and shall provide Party B with evidence of such insurance upon request.
+
+ADDENDUM 2 — DATA PROTECTION AND SECURITY
+
+A2.1 Party A shall process personal data provided by Party B solely for the purpose of performing the Services and shall not process such data for any other purpose. Any processing of personal data that is prohibited under Decree No. 13/2023/ND-CP shall not be carried out by Party A under any circumstances.
+
+A2.2 Party A must implement technical and organizational security measures consistent with ISO/IEC 27001:2022 to protect personal data from unauthorized access, disclosure, alteration, or destruction.
+
+A2.3 If Party A becomes aware of any actual or suspected data breach, Party A shall notify Party B in writing within seventy-two (72) hours of becoming aware of the breach, regardless of whether the breach has been fully assessed, and must provide Party B with a preliminary incident report within twenty-four (24) hours thereafter.
+
+A2.4 Party B is entitled to conduct, or to appoint a qualified third-party auditor to conduct, an annual security audit of Party A's data processing facilities and practices upon thirty (30) days' prior written notice, provided that such audit does not unreasonably disrupt Party A's business operations.
+
+A2.5 Upon termination or expiry of this Agreement, Party A must securely delete or return all personal data processed on behalf of Party B within thirty (30) days, in accordance with the data retention and deletion procedures agreed in Schedule A. Any retention of personal data beyond this period is prohibited unless required by applicable law.

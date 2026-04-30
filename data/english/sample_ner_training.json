@@ -1,0 +1,272 @@
+[
+  {
+    "text": "Party A shall pay Party B the sum of $5,000 USD within 30 days of the effective date.",
+    "entities": [
+      {"start": 0, "end": 7, "label": "PARTY"},
+      {"start": 18, "end": 25, "label": "PARTY"},
+      {"start": 37, "end": 47, "label": "MONEY"},
+      {"start": 55, "end": 84, "label": "DATE"}
+    ]
+  },
+  {
+    "text": "The Employer shall remit a monthly salary of VND 15,000,000 to the Employee by the 5th of each month.",
+    "entities": [
+      {"start": 4, "end": 12, "label": "PARTY"},
+      {"start": 45, "end": 59, "label": "MONEY"},
+      {"start": 63, "end": 71, "label": "PARTY"},
+      {"start": 75, "end": 100, "label": "DATE"}
+    ]
+  },
+  {
+    "text": "Lessor agrees to lease the premises to Lessee for USD 2,500 per month commencing 01 January 2024.",
+    "entities": [
+      {"start": 0, "end": 6, "label": "PARTY"},
+      {"start": 38, "end": 44, "label": "PARTY"},
+      {"start": 49, "end": 59, "label": "MONEY"},
+      {"start": 80, "end": 96, "label": "DATE"}
+    ]
+  },
+  {
+    "text": "In the event of late payment, Party A shall pay a penalty of 0.05% per day on the outstanding amount.",
+    "entities": [
+      {"start": 30, "end": 37, "label": "PARTY"},
+      {"start": 61, "end": 72, "label": "RATE"},
+      {"start": 52, "end": 59, "label": "PENALTY"}
+    ]
+  },
+  {
+    "text": "The Borrower must repay the principal of $50,000 with interest at 12% per annum within 24 months.",
+    "entities": [
+      {"start": 4, "end": 12, "label": "PARTY"},
+      {"start": 41, "end": 48, "label": "MONEY"},
+      {"start": 66, "end": 79, "label": "RATE"},
+      {"start": 87, "end": 96, "label": "DATE"}
+    ]
+  },
+  {
+    "text": "Pursuant to Civil Code Article 463, the Lender shall charge interest at a rate of 1.5% per month.",
+    "entities": [
+      {"start": 12, "end": 34, "label": "LAW"},
+      {"start": 39, "end": 45, "label": "PARTY"},
+      {"start": 82, "end": 97, "label": "RATE"}
+    ]
+  },
+  {
+    "text": "Party B must deliver the goods to Party A by 15 March 2025 as stipulated in this Agreement.",
+    "entities": [
+      {"start": 0, "end": 7, "label": "PARTY"},
+      {"start": 34, "end": 41, "label": "PARTY"},
+      {"start": 45, "end": 58, "label": "DATE"}
+    ]
+  },
+  {
+    "text": "The Employee is entitled to receive an annual bonus of $10,000 if performance targets are met.",
+    "entities": [
+      {"start": 4, "end": 12, "label": "PARTY"},
+      {"start": 54, "end": 61, "label": "MONEY"}
+    ]
+  },
+  {
+    "text": "Under Law No. 91/2015/QH13, the Seller must issue a VAT invoice for all transactions exceeding VND 200,000.",
+    "entities": [
+      {"start": 6, "end": 26, "label": "LAW"},
+      {"start": 32, "end": 38, "label": "PARTY"},
+      {"start": 95, "end": 107, "label": "MONEY"}
+    ]
+  },
+  {
+    "text": "The Contractor shall complete all construction works by 30 June 2025, failing which a penalty of $500 per day shall apply.",
+    "entities": [
+      {"start": 4, "end": 14, "label": "PARTY"},
+      {"start": 55, "end": 67, "label": "DATE"},
+      {"start": 82, "end": 89, "label": "PENALTY"},
+      {"start": 93, "end": 103, "label": "MONEY"}
+    ]
+  },
+  {
+    "text": "Party A and Party B agree to share profits in equal proportion as set out in Clause 5 of this Contract.",
+    "entities": [
+      {"start": 0, "end": 7, "label": "PARTY"},
+      {"start": 12, "end": 19, "label": "PARTY"}
+    ]
+  },
+  {
+    "text": "The Licensee shall pay a licensing fee of $1,200 annually to the Licensor starting from 01 April 2024.",
+    "entities": [
+      {"start": 4, "end": 12, "label": "PARTY"},
+      {"start": 42, "end": 48, "label": "MONEY"},
+      {"start": 64, "end": 72, "label": "PARTY"},
+      {"start": 88, "end": 101, "label": "DATE"}
+    ]
+  },
+  {
+    "text": "According to Article 15 of the Labor Code, the Employer must provide 30 days notice before termination.",
+    "entities": [
+      {"start": 13, "end": 41, "label": "LAW"},
+      {"start": 47, "end": 55, "label": "PARTY"},
+      {"start": 69, "end": 80, "label": "DATE"}
+    ]
+  },
+  {
+    "text": "The Tenant shall deposit three months rent equivalent to $4,500 USD with the Landlord on signing date.",
+    "entities": [
+      {"start": 4, "end": 10, "label": "PARTY"},
+      {"start": 57, "end": 66, "label": "MONEY"},
+      {"start": 76, "end": 84, "label": "PARTY"}
+    ]
+  },
+  {
+    "text": "Any overdue amount shall accrue interest at the rate of 2% per month as stipulated in Law No. 47/2010/QH12.",
+    "entities": [
+      {"start": 55, "end": 67, "label": "RATE"},
+      {"start": 83, "end": 106, "label": "LAW"}
+    ]
+  },
+  {
+    "text": "The Buyer agrees to pay Party A a deposit of $20,000 on or before 10 February 2025.",
+    "entities": [
+      {"start": 4, "end": 9, "label": "PARTY"},
+      {"start": 23, "end": 30, "label": "PARTY"},
+      {"start": 45, "end": 52, "label": "MONEY"},
+      {"start": 67, "end": 83, "label": "DATE"}
+    ]
+  },
+  {
+    "text": "Party B shall be liable for a penalty not exceeding 20% of the total contract value for any material breach.",
+    "entities": [
+      {"start": 0, "end": 7, "label": "PARTY"},
+      {"start": 30, "end": 37, "label": "PENALTY"},
+      {"start": 52, "end": 55, "label": "RATE"}
+    ]
+  },
+  {
+    "text": "The Service Provider must maintain professional indemnity insurance of at least $2,000,000 throughout the contract term.",
+    "entities": [
+      {"start": 4, "end": 20, "label": "PARTY"},
+      {"start": 80, "end": 90, "label": "MONEY"}
+    ]
+  },
+  {
+    "text": "Pursuant to Section 4.2 of Civil Code 2015, the Obligor shall pay damages amounting to VND 500,000,000 to the Obligee.",
+    "entities": [
+      {"start": 12, "end": 42, "label": "LAW"},
+      {"start": 48, "end": 55, "label": "PARTY"},
+      {"start": 87, "end": 103, "label": "MONEY"},
+      {"start": 111, "end": 118, "label": "PARTY"}
+    ]
+  },
+  {
+    "text": "The Franchisor shall provide initial training to the Franchisee within 60 days of the signing of this Agreement.",
+    "entities": [
+      {"start": 4, "end": 14, "label": "PARTY"},
+      {"start": 52, "end": 62, "label": "PARTY"},
+      {"start": 70, "end": 79, "label": "DATE"}
+    ]
+  },
+  {
+    "text": "Party A may terminate this Agreement upon 30 days written notice to Party B if Party B defaults on any payment exceeding $10,000.",
+    "entities": [
+      {"start": 0, "end": 7, "label": "PARTY"},
+      {"start": 42, "end": 58, "label": "DATE"},
+      {"start": 67, "end": 74, "label": "PARTY"},
+      {"start": 78, "end": 85, "label": "PARTY"},
+      {"start": 121, "end": 128, "label": "MONEY"}
+    ]
+  },
+  {
+    "text": "The interest rate applicable under this loan agreement shall be fixed at 8.5% per annum for the first 12 months.",
+    "entities": [
+      {"start": 72, "end": 84, "label": "RATE"},
+      {"start": 99, "end": 111, "label": "DATE"}
+    ]
+  },
+  {
+    "text": "Employee shall receive a performance bonus of VND 30,000,000 payable on 31 December 2024.",
+    "entities": [
+      {"start": 0, "end": 8, "label": "PARTY"},
+      {"start": 46, "end": 61, "label": "MONEY"},
+      {"start": 72, "end": 88, "label": "DATE"}
+    ]
+  },
+  {
+    "text": "In accordance with Article 7 of Law No. 29/2013/QH13, the Lessor shall return the security deposit of $3,000 within 15 days of lease expiry.",
+    "entities": [
+      {"start": 19, "end": 52, "label": "LAW"},
+      {"start": 58, "end": 64, "label": "PARTY"},
+      {"start": 102, "end": 108, "label": "MONEY"},
+      {"start": 116, "end": 124, "label": "DATE"}
+    ]
+  },
+  {
+    "text": "Party B shall not sub-contract any work valued above $25,000 without prior written consent from Party A.",
+    "entities": [
+      {"start": 0, "end": 7, "label": "PARTY"},
+      {"start": 53, "end": 60, "label": "MONEY"},
+      {"start": 94, "end": 101, "label": "PARTY"}
+    ]
+  },
+  {
+    "text": "The Assignor hereby transfers all rights under this Agreement to the Assignee effective 01 July 2025.",
+    "entities": [
+      {"start": 4, "end": 12, "label": "PARTY"},
+      {"start": 68, "end": 76, "label": "PARTY"},
+      {"start": 87, "end": 100, "label": "DATE"}
+    ]
+  },
+  {
+    "text": "Pursuant to Law on Enterprises 2020, the Guarantor shall indemnify Party A for losses exceeding USD 100,000.",
+    "entities": [
+      {"start": 12, "end": 35, "label": "LAW"},
+      {"start": 41, "end": 50, "label": "PARTY"},
+      {"start": 65, "end": 72, "label": "PARTY"},
+      {"start": 92, "end": 107, "label": "MONEY"}
+    ]
+  },
+  {
+    "text": "A late payment penalty of 0.1% per day shall be applied to any amount unpaid after the due date.",
+    "entities": [
+      {"start": 25, "end": 37, "label": "RATE"},
+      {"start": 2, "end": 23, "label": "PENALTY"}
+    ]
+  },
+  {
+    "text": "The Consultant shall submit a final report to Party B no later than 28 February 2025.",
+    "entities": [
+      {"start": 4, "end": 14, "label": "PARTY"},
+      {"start": 45, "end": 52, "label": "PARTY"},
+      {"start": 68, "end": 84, "label": "DATE"}
+    ]
+  },
+  {
+    "text": "Party A shall not be required to pay any penalty if the delay is caused by a Force Majeure event as defined in Civil Code Article 156.",
+    "entities": [
+      {"start": 0, "end": 7, "label": "PARTY"},
+      {"start": 110, "end": 133, "label": "LAW"}
+    ]
+  },
+  {
+    "text": "The Distributor must maintain a minimum monthly purchase of $50,000 and remit payment to the Manufacturer within 14 days of invoice.",
+    "entities": [
+      {"start": 4, "end": 15, "label": "PARTY"},
+      {"start": 59, "end": 66, "label": "MONEY"},
+      {"start": 92, "end": 104, "label": "PARTY"},
+      {"start": 112, "end": 121, "label": "DATE"}
+    ]
+  },
+  {
+    "text": "As prescribed by Article 385 of the Civil Code, Creditor A is entitled to recover compound interest at 15% per annum on overdue debts.",
+    "entities": [
+      {"start": 17, "end": 46, "label": "LAW"},
+      {"start": 48, "end": 58, "label": "PARTY"},
+      {"start": 103, "end": 116, "label": "RATE"}
+    ]
+  },
+  {
+    "text": "The Principal shall pay the Agent a commission of 5% of net sales value, settled on the last business day of each quarter.",
+    "entities": [
+      {"start": 4, "end": 13, "label": "PARTY"},
+      {"start": 28, "end": 33, "label": "PARTY"},
+      {"start": 50, "end": 71, "label": "RATE"}
+    ]
+  }
+]

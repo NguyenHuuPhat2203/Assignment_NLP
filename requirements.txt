@@ -1,0 +1,67 @@
+# NLP Assignment Requirements
+# Python >= 3.12
+#
+# Versions are expressed as minimums (>=) so pip can freely resolve the latest
+# compatible release.  Do NOT use == pins — they break on Python patch updates.
+#
+# PyTorch note
+#
+# torch/torchvision/torchaudio are listed here for Linux/macOS (PyPI CPU build).
+# On Windows the setup script installs them first via the official wheel index,
+# so pip will treat the lines below as already satisfied and skip them.
+
+# Manual override:
+#   CPU  — pip install "torch>=2.2" torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
+#   CUDA — pip install "torch>=2.2" torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+
+# Core NLP
+spacy>=3.7
+spacy-transformers>=1.3
+underthesea>=6.8
+langdetect>=1.0.9
+
+# Transformers
+transformers>=4.44
+tokenizers>=0.19
+accelerate>=0.30
+sentencepiece>=0.2.0
+protobuf>=4.25
+
+# PyTorch
+torch>=2.2
+torchvision>=0.17
+torchaudio>=2.2
+
+# ML / Sklearn
+scikit-learn>=1.3
+numpy>=1.26
+pandas>=2.1
+matplotlib>=3.8
+seaborn>=0.13
+
+# HuggingFace
+datasets>=2.16
+huggingface-hub>=0.23
+evaluate>=0.4
+seqeval>=1.2.2
+
+# Embeddings & Vector DB
+sentence-transformers>=3.0
+chromadb>=0.4
+
+# LangChain + Gemini
+langchain>=0.2
+langchain-community>=0.2
+langchain-google-genai>=1.0
+google-generativeai>=0.7
+
+# Web / Interface
+streamlit>=1.30
+fastapi>=0.100
+uvicorn>=0.30
+
+# Utilities
+python-dotenv>=1.0
+tqdm>=4.66
+kaggle>=1.6
+openpyxl>=3.1
