@@ -131,8 +131,12 @@ class TFIDFIntentClassifier:
             ),
             (
                 "clf",
-                LogisticRegression(C=1.0, max_iter=1000, solver="lbfgs",
-                                   multi_class="multinomial"),
+                LogisticRegression(
+                    C=1.0,
+                    max_iter=1000,
+                    solver="lbfgs",
+                    class_weight="balanced",
+                ),
             ),
         ])
         self._label2id = LABEL2ID
@@ -235,8 +239,20 @@ class BERTIntentClassifier:
         train_data: tuple[list[str], list[str]],
         save_path: str = "models/intent_bert",
     ) -> None:
-        """Fine-tune BERT on *train_data* (clauses, labels) tuple."""
-        from transformers import DataCollatorWithPadding, Trainer, TrainingArguments
+        """Fine-tune BERT on *train_data* (clauses, labels) tuple.
+
+        Uses a class-weighted cross-entropy loss to mitigate the severe class
+        imbalance observed in legal-contract intent corpora (Obligation
+        typically dominates 80–90\\% of clauses).
+        """
+        import torch
+        import torch.nn as nn
+        from transformers import (
+            DataCollatorWithPadding,
+            EarlyStoppingCallback,
+            Trainer,
+            TrainingArguments,
+        )
 
         clauses, labels = train_data
         dataset = self.prepare_data(clauses, labels)
@@ -245,11 +261,24 @@ class BERTIntentClassifier:
         save_dir = PROJECT_ROOT / save_path
         save_dir.mkdir(parents=True, exist_ok=True)
 
+        # ---- compute class weights (inverse frequency, normalised) -----
+        label_ids = [LABEL2ID[lbl] for lbl in labels]
+        counts = np.bincount(label_ids, minlength=self.num_labels).astype(np.float64)
+        # Avoid division by zero for unseen classes.
+        counts = np.where(counts == 0, 1.0, counts)
+        weights = counts.sum() / (self.num_labels * counts)
+        class_weights = torch.tensor(weights, dtype=torch.float32)
+        logger.info(
+            "Intent class counts=%s  -> weights=%s",
+            counts.tolist(),
+            [round(w, 3) for w in weights.tolist()],
+        )
+
         data_collator = DataCollatorWithPadding(self.tokenizer)
 
         args = TrainingArguments(
             output_dir=str(save_dir),
-            num_train_epochs=3,
+            num_train_epochs=8,
             per_device_train_batch_size=8,
             per_device_eval_batch_size=8,
             learning_rate=2e-5,
@@ -257,13 +286,35 @@ class BERTIntentClassifier:
             eval_strategy="epoch",
             save_strategy="epoch",
             load_best_model_at_end=True,
+            metric_for_best_model="f1_macro",
+            greater_is_better=True,
             no_cuda=not _cuda_available(),
             push_to_hub=False,
             logging_steps=10,
             report_to="none",
         )
 
-        trainer = Trainer(
+        class _WeightedTrainer(Trainer):
+            def compute_loss(
+                _self,
+                model: Any,
+                inputs: Any,
+                return_outputs: bool = False,
+                **kwargs: Any,
+            ) -> Any:
+                labels_t = inputs.pop("labels")
+                outputs = model(**inputs)
+                logits = outputs.logits
+                loss_fct = nn.CrossEntropyLoss(
+                    weight=class_weights.to(logits.device)
+                )
+                loss = loss_fct(
+                    logits.view(-1, model.config.num_labels),
+                    labels_t.view(-1),
+                )
+                return (loss, outputs) if return_outputs else loss
+
+        trainer = _WeightedTrainer(
             model=self.model,
             args=args,
             train_dataset=split["train"],
@@ -271,6 +322,7 @@ class BERTIntentClassifier:
             tokenizer=self.tokenizer,
             data_collator=data_collator,
             compute_metrics=self._compute_metrics,
+            callbacks=[EarlyStoppingCallback(early_stopping_patience=2)],
         )
 
         logger.info("Starting BERT intent classification fine-tuning …")

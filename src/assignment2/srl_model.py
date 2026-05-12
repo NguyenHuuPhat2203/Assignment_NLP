@@ -79,7 +79,27 @@ class SRLModel:
                 }
             }
         """
+        # Skip non-sentential fragments (titles, definition keys, very short text).
+        # Article headers (e.g. "ARTICLE 1 — DEFINITIONS", "SOFTWARE SERVICES
+        # AGREEMENT") and entity references (e.g. "TechVision Solutions Pte. Ltd.")
+        # do not contain a verbal predicate and should not be processed.
+        if not self._is_processable(clause):
+            return {
+                "clause": clause,
+                "predicate": "",
+                "roles": {},
+            }
+
         doc = self._nlp(clause)
+
+        # Require an actual verb to be present, otherwise the clause is a noun
+        # phrase or title and SRL is meaningless.
+        if not any(t.pos_ in {"VERB", "AUX"} for t in doc):
+            return {
+                "clause": clause,
+                "predicate": "",
+                "roles": {},
+            }
 
         root = self._find_root(doc)
         if root is None:
@@ -173,15 +193,41 @@ class SRLModel:
 
     @staticmethod
     def _find_root(doc: Any) -> Any | None:
-        """Return the ROOT verb token from a spaCy doc."""
+        """Return the ROOT verb token from a spaCy doc.
+
+        Only verbal (VERB / AUX) ROOTs are accepted.  If the spaCy ROOT is a
+        noun (typical of titles or appositive fragments), search the document
+        for any VERB / AUX token to act as the predicate; otherwise return
+        ``None`` so the caller can skip SRL for this clause.
+        """
         for token in doc:
             if token.dep_ == "ROOT" and token.pos_ in {"VERB", "AUX"}:
                 return token
-        # Fallback: any ROOT token
+        # Secondary search: a verb anywhere in the doc — handles cases where
+        # spaCy mis-parses a long fragment and attaches ROOT to a noun.
         for token in doc:
-            if token.dep_ == "ROOT":
+            if token.pos_ in {"VERB", "AUX"}:
                 return token
         return None
+
+    @staticmethod
+    def _is_processable(clause: str) -> bool:
+        """Return False for fragments that are not full sentences.
+
+        Filters out section/article headers (mostly uppercase, no lowercase
+        letters), single-line definition keys, and very short fragments.
+        """
+        stripped = clause.strip()
+        if len(stripped) < 5:
+            return False
+
+        # All-caps headers like "ARTICLE 1 — DEFINITIONS" or "SOFTWARE
+        # SERVICES AGREEMENT" — uppercase letters with no lowercase letters.
+        letters = [c for c in stripped if c.isalpha()]
+        if letters and not any(c.islower() for c in letters):
+            return False
+
+        return True
 
 
 # ---------------------------------------------------------------------------

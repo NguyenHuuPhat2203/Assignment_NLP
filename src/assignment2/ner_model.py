@@ -1,18 +1,18 @@
 """
 Named Entity Recognition — Assignment 2, Task 2.1
 
-Fine-tunes Legal-BERT (nlpaueb/legal-bert-base-uncased) for NER on legal contracts.
+Hybrid approach: Rule-based NER + fine-tuned Legal-BERT.
+- RuleBasedNER handles MONEY, DATE, RATE, LAW, PENALTY with regex.
+- LegalNERModel (fine-tuned on manual + silver labels) handles PARTY and complex spans.
+- Prediction always merges both; rule-based takes precedence on overlaps.
 
 Entity schema:
-    PARTY   - contracting parties (Party A, Employer, Employee, Lessor, Lessee)
-    MONEY   - monetary amounts ($5,000, 10,000 VND, USD 1,000)
-    DATE    - dates and time expressions (05 May 2024, within 30 days)
-    RATE    - interest/penalty rates (1% per day, 12% per annum)
-    PENALTY - penalty clauses
-    LAW     - legal references (Civil Code Article 10, Law No. 91/2015)
-
-Usage:
-    python src/assignment2/ner_model.py  
+    PARTY   - contracting parties (Party A, Party B, Service Provider, Client)
+    MONEY   - monetary amounts ($5,000 USD, 150,000 VND)
+    DATE    - dates and durations (01 March 2024, within 30 days)
+    RATE    - percentages and interest rates (1.5%, 15%)
+    PENALTY - penalty clauses (late payment penalty, termination fee)
+    LAW     - legal references (Law No. 50/2005/QH11, Decree No. 13/2023)
 """
 
 from __future__ import annotations
@@ -36,54 +36,96 @@ LABEL_LIST = ["O", "B-PARTY", "I-PARTY", "B-MONEY", "I-MONEY", "B-DATE", "I-DATE
 LABEL2ID = {label: idx for idx, label in enumerate(LABEL_LIST)}
 ID2LABEL = {idx: label for label, idx in LABEL2ID.items()}
 
+_MONTHS = (
+    r"January|February|March|April|May|June|"
+    r"July|August|September|October|November|December"
+)
 
 
 class RuleBasedNER:
-    """Regex-based NER for MONEY, DATE, RATE, PARTY, and LAW entities."""
+    """Regex-based NER for all six entity types."""
 
     _PATTERNS: list[tuple[str, re.Pattern[str]]] = [
+        # ── MONEY ─────────────────────────────────────────────────────────────
         ("MONEY", re.compile(
-            r"\b(?:USD|VND|EUR|GBP|AUD)[\s]?\d[\d,\.]*"
-            r"|\$[\d,\.]+(?:\s*(?:USD|VND|EUR))?"
-            r"|\d[\d,\.]*\s*(?:USD|VND|EUR|GBP)",
+            # "$150,000 USD" / "$30,000" / "USD 5,000"
+            r"\b(?:USD|VND|EUR|GBP|AUD)\s*[\d,\.]+"
+            r"|\$\s*[\d,\.]+(?:\s*(?:USD|VND|EUR|dollars?))?"
+            r"|\b[\d,\.]+\s*(?:USD|VND|EUR|GBP|dollars?)\b",
             re.IGNORECASE,
         )),
+        # ── RATE ──────────────────────────────────────────────────────────────
+        # Match any percentage (handles "(1.5%)", "15%", "1.5% per month")
         ("RATE", re.compile(
-            r"\d+(?:\.\d+)?%\s*(?:per\s+(?:day|month|annum|year|week|quarter))",
+            r"\b\d+(?:\.\d+)?%",
             re.IGNORECASE,
         )),
+        # ── DATE ──────────────────────────────────────────────────────────────
         ("DATE", re.compile(
-            r"\b\d{1,2}\s+(?:January|February|March|April|May|June|July|August"
-            r"|September|October|November|December)\s+\d{4}"
-            r"|\b(?:January|February|March|April|May|June|July|August"
-            r"|September|October|November|December)\s+\d{1,2},?\s+\d{4}"
+            # "1st day of March, 2024"
+            r"\b\d{1,2}(?:st|nd|rd|th)\s+day\s+of\s+(?:" + _MONTHS + r"),?\s+\d{4}"
+            # "01 March 2024" / "1 January 2024"
+            r"|\b\d{1,2}\s+(?:" + _MONTHS + r")\s+\d{4}"
+            # "March 1, 2024"
+            r"|\b(?:" + _MONTHS + r")\s+\d{1,2},?\s+\d{4}"
+            # "01/03/2024" or "01-03-2024"
             r"|\b\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}"
-            r"|\bwithin\s+\d+\s+(?:days?|months?|years?|weeks?|business\s+days?)"
-            r"|\b\d+\s+(?:days?|months?|years?|weeks?)\s+(?:of|from|after|before|notice)",
+            # "thirty (30) Business Days" / "fifteen (15) days" (word + digit in parens)
+            r"|\b(?:one|two|three|four|five|six|seven|eight|nine|ten"
+            r"|eleven|twelve|fifteen|twenty|thirty|forty|forty-five|sixty|ninety"
+            r")\s+\(\d+\)\s+(?:consecutive\s+)?(?:Business\s+)?(?:days?|months?|years?|weeks?)"
+            # "30 (thirty) days" (digit + word in parens)
+            r"|\b\d+\s+\(\w+\)\s+(?:consecutive\s+)?(?:Business\s+)?(?:days?|months?|years?|weeks?)"
+            # "within 30 days" / "within 5 Business Days"
+            r"|\bwithin\s+\d+\s+(?:Business\s+)?(?:days?|months?|years?|weeks?)"
+            # "30 days" / "60 consecutive days" / "5 years" (stand-alone duration)
+            r"|\b\d+\s+(?:consecutive\s+)?(?:Business\s+)?(?:days?|months?|years?|weeks?)\b",
             re.IGNORECASE,
         )),
+        # ── PARTY ─────────────────────────────────────────────────────────────
+        # No IGNORECASE: "Principal" as adjective ("principal place") must not match.
         ("PARTY", re.compile(
             r"\bParty\s+[A-Z]\b"
+            r"|\bthe\s+Parties\b"
             r"|\b(?:Employer|Employee|Lessor|Lessee|Buyer|Seller|Licensor|Licensee"
             r"|Borrower|Lender|Franchisor|Franchisee|Contractor|Consultant|Tenant"
             r"|Landlord|Assignor|Assignee|Creditor|Guarantor|Obligor|Obligee"
-            r"|Distributor|Manufacturer|Agent|Principal|Service\s+Provider)\b",
-            re.IGNORECASE,
+            r"|Distributor|Manufacturer|Principal|Service\s+Provider|Client"
+            r"|Indemnitor|Indemnified\s+Party|Affected\s+Party)\b",
         )),
+        # ── LAW ───────────────────────────────────────────────────────────────
         ("LAW", re.compile(
-            r"\b(?:Civil\s+Code|Labor\s+Code|Law\s+on\s+\w+(?:\s+\w+)?)"
-            r"(?:\s+(?:Article|Section|No\.?)\s+[\w\/\.]+)?"
-            r"|\bLaw\s+No\.?\s+[\d\/A-Z]+",
+            # "Law No. 50/2005/QH11" / "Law No. 13/2008/QH12"
+            r"\bLaw\s+No\.?\s+[\d\/\w\-]+"
+            # "Decree No. 13/2023/ND-CP"
+            r"|\bDecree\s+No\.?\s+[\d\/\w\-]+"
+            # "Circular No. 05/2017/TT-BTC"
+            r"|\bCircular\s+No\.?\s+[\d\/\w\-]+"
+            # "Civil Code", "Labor Code", "Commercial Law No. X"
+            r"|\b(?:Civil|Labor|Commercial)\s+(?:Code|Law)(?:\s+No\.?\s+[\d\/\w\-]+)?"
+            r"(?:\s+Article\s+\d+)?"
+            # "Law on Intellectual Property", "Law on Value-Added Tax"
+            r"|\bLaw\s+on\s+[\w\s\-]+(?=\s)"
+            # "Personal Data Protection Act", "Software Liability Act Article 7"
+            r"|\b[\w\s]+(?:Protection|Liability|Anti-Corruption|Anti-Bribery)\s+Act"
+            r"(?:\s+Article\s+\d+)?"
+            # "United Nations Convention against Corruption"
+            r"|\bUnited\s+Nations\s+Convention\s+against\s+Corruption"
+            # "SIAC Rules"
+            r"|\bSIAC\s+Rules",
             re.IGNORECASE,
         )),
+        # ── PENALTY ───────────────────────────────────────────────────────────
         ("PENALTY", re.compile(
-            r"\b(?:late\s+payment\s+)?penalty\b",
+            r"\b(?:late\s+payment\s+)?penalty\b"
+            r"|\btermination\s+fee\b"
+            r"|\bliquidated\s+damages?\b"
+            r"|\bpunitive\s+damages?\b",
             re.IGNORECASE,
         )),
     ]
 
     def predict(self, text: str) -> list[dict[str, Any]]:
-        """Return list of entity dicts from a text string."""
         entities: list[dict[str, Any]] = []
         occupied: list[tuple[int, int]] = []
 
@@ -101,6 +143,79 @@ class RuleBasedNER:
 
 
 # ---------------------------------------------------------------------------
+# Silver-label generation
+# ---------------------------------------------------------------------------
+
+# Tokens too short, pure-punctuation, or pure-stopword spans must never be
+# included in the silver-label training set because Legal-BERT will overfit
+# on them and emit spurious entities (e.g. "of" → RATE) at inference time.
+_STOPWORD_SPANS: frozenset[str] = frozenset({
+    "of", "the", "a", "an", "and", "or", "to", "in", "on", "at", "for",
+    "by", "with", "from", "as", "is", "are", "be", "been", "this", "that",
+    "these", "those", "any", "all", "such", "no",
+})
+
+
+def _is_valid_silver_entity(entity: dict[str, Any]) -> bool:
+    """Filter out noisy silver-label spans before fine-tuning."""
+    text = entity.get("text", "").strip()
+    if len(text) < 2:
+        return False
+    # Reject spans made up only of punctuation/whitespace.
+    if not any(ch.isalnum() for ch in text):
+        return False
+    # Reject lone stopwords or stopword-only multi-token spans.
+    tokens = text.lower().split()
+    if tokens and all(tok in _STOPWORD_SPANS for tok in tokens):
+        return False
+    return True
+
+
+def _generate_silver_data(clauses: list[str], rule_ner: RuleBasedNER) -> list[dict[str, Any]]:
+    """Generate training examples from rule-based NER on contract clauses.
+
+    Spans that fail :func:`_is_valid_silver_entity` (single characters,
+    punctuation-only, or stopword-only) are dropped so the fine-tuned
+    Legal-BERT model does not learn to label them as entities.
+    """
+    silver: list[dict[str, Any]] = []
+    n_dropped = 0
+    for clause in clauses:
+        raw_entities = rule_ner.predict(clause)
+        entities = [e for e in raw_entities if _is_valid_silver_entity(e)]
+        n_dropped += len(raw_entities) - len(entities)
+        if entities:
+            silver.append({"text": clause, "entities": entities})
+    logger.info(
+        "Generated %d silver-label examples from %d clauses (dropped %d noisy spans).",
+        len(silver), len(clauses), n_dropped,
+    )
+    return silver
+
+
+# ---------------------------------------------------------------------------
+# Merge utility
+# ---------------------------------------------------------------------------
+
+def _merge_entities(
+    rule_entities: list[dict[str, Any]],
+    bert_entities: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    """Merge rule-based and BERT predictions; rule-based takes precedence on overlaps."""
+    merged = list(rule_entities)
+    occupied = [(e["start"], e["end"]) for e in rule_entities]
+
+    for ent in bert_entities:
+        s, e = ent["start"], ent["end"]
+        if not any(a < e and s < b for a, b in occupied):
+            merged.append(ent)
+            occupied.append((s, e))
+
+    merged.sort(key=lambda x: x["start"])
+    return merged
+
+
+# ---------------------------------------------------------------------------
 # Dataset helper
 # ---------------------------------------------------------------------------
 
@@ -109,10 +224,6 @@ def _char_to_token_labels(
     text: str,
     char_entities: list[dict[str, Any]],
 ) -> dict[str, Any]:
-    """Convert character-level entity spans to token-level BIO labels.
-
-    Returns a dict compatible with HuggingFace ``Dataset``.
-    """
     encoding = tokenizer(
         text,
         return_offsets_mapping=True,
@@ -126,7 +237,7 @@ def _char_to_token_labels(
 
     for ent in char_entities:
         ent_start, ent_end, ent_label = ent["start"], ent["end"], ent["label"]
-        entity_started = False   # True once the first word of this entity is labeled
+        entity_started = False
         prev_word_id: int | None = None
         for token_idx, (char_start, char_end) in enumerate(offset_mapping):
             if char_start == 0 and char_end == 0:
@@ -135,12 +246,10 @@ def _char_to_token_labels(
             if char_start >= ent_start and char_end <= ent_end:
                 wid = word_ids[token_idx]
                 if wid != prev_word_id:
-                    # First subword of a new word inside the entity
                     labels[token_idx] = f"B-{ent_label}" if not entity_started else f"I-{ent_label}"
                     entity_started = True
                     prev_word_id = wid
                 else:
-                    # Continuation subword of the same word
                     labels[token_idx] = f"I-{ent_label}"
 
     label_ids = [LABEL2ID.get(lbl, LABEL2ID["O"]) for lbl in labels]
@@ -152,11 +261,11 @@ def _char_to_token_labels(
 
 
 # ---------------------------------------------------------------------------
-# Main model class
+# BERT model class
 # ---------------------------------------------------------------------------
 
 class LegalNERModel:
-    """Fine-tuned Legal-BERT NER model for legal contract entities."""
+    """Fine-tuned Legal-BERT NER model."""
 
     def __init__(self, model_name: str = "nlpaueb/legal-bert-base-uncased") -> None:
         self.model_name = model_name
@@ -166,7 +275,6 @@ class LegalNERModel:
 
     def _load_model(self) -> None:
         from transformers import AutoModelForTokenClassification, AutoTokenizer
-
         logger.info("Loading tokenizer and model: %s", self.model_name)
         self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
         self.model = AutoModelForTokenClassification.from_pretrained(
@@ -177,24 +285,29 @@ class LegalNERModel:
             ignore_mismatched_sizes=True,
         )
 
+    @classmethod
+    def from_saved(cls, path: str | Path) -> "LegalNERModel":
+        """Load a previously fine-tuned model without touching the base weights."""
+        from transformers import AutoModelForTokenClassification, AutoTokenizer
+        obj = cls.__new__(cls)
+        obj.model_name = str(path)
+        obj.tokenizer = AutoTokenizer.from_pretrained(str(path))
+        obj.model = AutoModelForTokenClassification.from_pretrained(str(path))
+        logger.info("Loaded fine-tuned NER model from %s", path)
+        return obj
+
     def load_training_data(self, json_path: str) -> list[dict[str, Any]]:
-        """Load annotated training examples from a JSON file."""
         with open(json_path, encoding="utf-8") as fh:
             data: list[dict[str, Any]] = json.load(fh)
         logger.info("Loaded %d training examples from %s", len(data), json_path)
         return data
 
     def prepare_dataset(self, examples: list[dict[str, Any]]) -> Any:
-        """Convert char-level annotation spans to a HuggingFace ``Dataset``."""
         from datasets import Dataset
-
-        records: list[dict[str, Any]] = []
-        for ex in examples:
-            record = _char_to_token_labels(
-                self.tokenizer, ex["text"], ex.get("entities", [])
-            )
-            records.append(record)
-
+        records = [
+            _char_to_token_labels(self.tokenizer, ex["text"], ex.get("entities", []))
+            for ex in examples
+        ]
         return Dataset.from_list(records)
 
     def train(
@@ -202,23 +315,18 @@ class LegalNERModel:
         train_data: list[dict[str, Any]],
         save_path: str = "models/ner_legal_bert",
     ) -> None:
-        """Fine-tune the model on training data and save to *save_path*."""
         from transformers import DataCollatorForTokenClassification, Trainer, TrainingArguments
 
         save_dir = PROJECT_ROOT / save_path
         save_dir.mkdir(parents=True, exist_ok=True)
 
         dataset = self.prepare_dataset(train_data)
-
         split = dataset.train_test_split(test_size=0.1, seed=42)
-        train_ds = split["train"]
-        eval_ds = split["test"]
 
         data_collator = DataCollatorForTokenClassification(self.tokenizer)
-
         args = TrainingArguments(
             output_dir=str(save_dir),
-            num_train_epochs=3,
+            num_train_epochs=5,
             per_device_train_batch_size=8,
             per_device_eval_batch_size=8,
             learning_rate=2e-5,
@@ -235,21 +343,21 @@ class LegalNERModel:
         trainer = Trainer(
             model=self.model,
             args=args,
-            train_dataset=train_ds,
-            eval_dataset=eval_ds,
+            train_dataset=split["train"],
+            eval_dataset=split["test"],
             tokenizer=self.tokenizer,
             data_collator=data_collator,
             compute_metrics=self._compute_metrics,
         )
 
-        logger.info("Starting NER fine-tuning …")
+        logger.info("Starting NER fine-tuning on %d examples …", len(train_data))
         trainer.train()
         trainer.save_model(str(save_dir))
         self.tokenizer.save_pretrained(str(save_dir))
         logger.info("Model saved to %s", save_dir)
 
     def _compute_metrics(self, eval_pred: Any) -> dict[str, float]:
-        from seqeval.metrics import classification_report, f1_score, precision_score, recall_score
+        from seqeval.metrics import f1_score, precision_score, recall_score
 
         logits, labels = eval_pred
         predictions = np.argmax(logits, axis=-1)
@@ -257,8 +365,7 @@ class LegalNERModel:
         true_labels: list[list[str]] = []
         pred_labels: list[list[str]] = []
         for pred_seq, label_seq in zip(predictions, labels):
-            true_seq: list[str] = []
-            pred_seq_str: list[str] = []
+            true_seq, pred_seq_str = [], []
             for p, l in zip(pred_seq, label_seq):
                 if l == -100:
                     continue
@@ -274,10 +381,6 @@ class LegalNERModel:
         }
 
     def predict(self, text: str) -> list[dict[str, Any]]:
-        """Run NER inference on a single text string.
-
-        Returns a list of ``{"text": str, "label": str, "start": int, "end": int}``.
-        """
         import torch
 
         encoding = self.tokenizer(
@@ -292,16 +395,13 @@ class LegalNERModel:
         with torch.no_grad():
             outputs = self.model(**encoding)
 
-        logits = outputs.logits[0]
-        pred_ids = logits.argmax(dim=-1).tolist()
+        pred_ids = outputs.logits[0].argmax(dim=-1).tolist()
         pred_labels = [ID2LABEL[pid] for pid in pred_ids]
 
         entities: list[dict[str, Any]] = []
         current_entity: dict[str, Any] | None = None
 
-        for token_idx, (label, (char_start, char_end)) in enumerate(
-            zip(pred_labels, offset_mapping)
-        ):
+        for label, (char_start, char_end) in zip(pred_labels, offset_mapping):
             if char_start == 0 and char_end == 0:
                 if current_entity:
                     entities.append(current_entity)
@@ -330,45 +430,17 @@ class LegalNERModel:
 
         return entities
 
-    def evaluate(self, test_data: list[dict[str, Any]]) -> dict[str, float]:
-        """Compute seqeval F1/Precision/Recall on annotated test examples."""
-        from seqeval.metrics import f1_score, precision_score, recall_score
-
-        true_labels: list[list[str]] = []
-        pred_labels: list[list[str]] = []
-
-        for ex in test_data:
-            text = ex["text"]
-            gold_entities = ex.get("entities", [])
-
-            true_bio = _bio_from_char_spans(text, gold_entities)
-            pred_entities = self.predict(text)
-            pred_bio = _bio_from_char_spans(text, pred_entities)
-
-            min_len = min(len(true_bio), len(pred_bio))
-            true_labels.append(true_bio[:min_len])
-            pred_labels.append(pred_bio[:min_len])
-
-        return {
-            "precision": precision_score(true_labels, pred_labels),
-            "recall": recall_score(true_labels, pred_labels),
-            "f1": f1_score(true_labels, pred_labels),
-        }
-
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
 
 def _bio_from_char_spans(text: str, entities: list[dict[str, Any]]) -> list[str]:
-    """Produce a character-level BIO tag sequence from entity spans."""
     tags = ["O"] * len(text)
     for ent in entities:
         label = ent["label"]
         start, end = ent["start"], ent["end"]
-        for i in range(start, end):
-            if i >= len(tags):
-                break
+        for i in range(start, min(end, len(tags))):
             tags[i] = f"B-{label}" if i == start else f"I-{label}"
     return tags
 
@@ -402,27 +474,73 @@ def main(output_dir: str | None = None, clauses_file: str | None = None) -> None
     ]
     logger.info("Loaded %d clauses from %s", len(clauses), _clauses_file)
 
+    # ── Always initialise rule-based NER (primary system) ────────────────────
     rule_ner = RuleBasedNER()
+
+    # ── Load or train BERT NER (supplementary system) ────────────────────────
+    saved_model_path = PROJECT_ROOT / "models" / "ner_legal_bert_v2"
+    bert_predict_fn = None
+
+    if saved_model_path.exists():
+        try:
+            bert_model = LegalNERModel.from_saved(saved_model_path)
+            bert_predict_fn = bert_model.predict
+            logger.info("Using saved fine-tuned model for BERT predictions.")
+        except Exception as exc:
+            logger.warning("Could not load saved model (%s); BERT disabled.", exc)
+    else:
+        logger.info("No saved model found — training with manual + silver labels.")
+        try:
+            bert_model = LegalNERModel()
+
+            # Load manual training data
+            manual_data: list[dict[str, Any]] = []
+            if training_json.exists():
+                manual_data = bert_model.load_training_data(str(training_json))
+
+            # Generate silver labels from rule-based NER on ALL contract clauses
+            silver_data = _generate_silver_data(clauses, rule_ner)
+
+            all_training = manual_data + silver_data
+            logger.info(
+                "Training on %d examples (%d manual + %d silver).",
+                len(all_training), len(manual_data), len(silver_data),
+            )
+
+            bert_model.train(all_training, save_path="models/ner_legal_bert_v2")
+            bert_predict_fn = bert_model.predict
+        except Exception as exc:
+            logger.warning("BERT training failed (%s); using rule-based only.", exc)
+
+    # ── Predict: hybrid merge (rule-based + BERT) ────────────────────────────
     results: list[dict[str, Any]] = []
-
-    try:
-        model = LegalNERModel()
-        train_data = model.load_training_data(str(training_json))
-        model.train(train_data, save_path="models/ner_legal_bert")
-        logger.info("Using fine-tuned Legal-BERT for prediction.")
-        predict_fn = model.predict
-    except Exception as exc:
-        logger.warning("BERT NER training failed (%s); falling back to rule-based NER.", exc)
-        predict_fn = rule_ner.predict
-
     for clause_id, clause in enumerate(clauses):
-        entities = predict_fn(clause)
+        rule_entities = rule_ner.predict(clause)
+
+        if bert_predict_fn is not None:
+            try:
+                bert_entities = bert_predict_fn(clause)
+                # Drop spurious BERT spans (single chars, punctuation,
+                # stopwords) before merging with rule-based predictions.
+                bert_entities = [e for e in bert_entities if _is_valid_silver_entity(e)]
+                entities = _merge_entities(rule_entities, bert_entities)
+            except Exception:
+                entities = rule_entities
+        else:
+            entities = rule_entities
+
         results.append({"clause_id": clause_id, "text": clause, "entities": entities})
 
     with open(ner_output, "w", encoding="utf-8") as fh:
         json.dump(results, fh, ensure_ascii=False, indent=2)
 
-    logger.info("NER results written to %s (%d clauses).", ner_output, len(results))
+    # ── Summary ──────────────────────────────────────────────────────────────
+    n_with = sum(1 for r in results if r["entities"])
+    total_ents = sum(len(r["entities"]) for r in results)
+    logger.info(
+        "NER results written to %s (%d clauses, %d with entities, %d total entities).",
+        ner_output, len(results), n_with, total_ents,
+    )
 
 
 if __name__ == "__main__":
