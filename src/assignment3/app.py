@@ -15,7 +15,7 @@ from dotenv import load_dotenv
 load_dotenv(_PROJECT_ROOT / ".env")
 
 import streamlit as st
-
+import pyarrow
 from assignment3.rag_pipeline import LegalRAGPipeline
 from assignment3.vector_store import LegalVectorStore
 
