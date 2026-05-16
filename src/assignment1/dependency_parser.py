@@ -1,29 +1,3 @@
-"""
-Dependency Parser — Assignment 1, Task 1.3
-
-Runs spaCy dependency parsing on each clause.
-
-Input:  output/clauses.txt
-Output: output/dependency.json
-    Format: JSON array of clause objects, each with:
-    {
-        "clause_id": int,
-        "text": str,
-        "tokens": [
-            {
-                "id": int,
-                "token": str,
-                "lemma": str,
-                "pos": str,
-                "tag": str,
-                "dep": str,
-                "head_id": int,
-                "head_token": str
-            }, ...
-        ]
-    }
-"""
-
 from __future__ import annotations
 
 import json
@@ -36,16 +10,7 @@ PROJECT_ROOT = Path(__file__).parent.parent.parent
 
 
 def parse_clause(clause: str, clause_id: int, nlp: spacy.Language) -> dict:
-    """Parse a single clause with spaCy and extract dependency information.
 
-    Args:
-        clause:    Clause text.
-        clause_id: Zero-based index for this clause.
-        nlp:       Loaded spaCy model.
-
-    Returns:
-        Dict with keys clause_id, text, and tokens (list of token dicts).
-    """
     doc: Doc = nlp(clause)
     tokens = [
         {
@@ -64,7 +29,9 @@ def parse_clause(clause: str, clause_id: int, nlp: spacy.Language) -> dict:
 
 
 def main(output_dir: str | None = None, clauses_file: str | None = None) -> None:
-    clauses_path = Path(clauses_file) if clauses_file else PROJECT_ROOT / "output" / "clauses.txt"
+    clauses_path = (
+        Path(clauses_file) if clauses_file else PROJECT_ROOT / "output" / "clauses.txt"
+    )
     _out = Path(output_dir) if output_dir else PROJECT_ROOT / "output"
     _out.mkdir(parents=True, exist_ok=True)
     output_path = _out / "dependency.json"
@@ -82,7 +49,9 @@ def main(output_dir: str | None = None, clauses_file: str | None = None) -> None
     print(f"Parsing {len(clauses)} clauses...")
     results = [parse_clause(clause, i, nlp) for i, clause in enumerate(clauses)]
 
-    output_path.write_text(json.dumps(results, indent=2, ensure_ascii=False), encoding="utf-8")
+    output_path.write_text(
+        json.dumps(results, indent=2, ensure_ascii=False), encoding="utf-8"
+    )
     print(f"Wrote dependency parse for {len(results)} clauses → {output_path}")
 
 

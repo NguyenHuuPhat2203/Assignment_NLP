@@ -1,15 +1,3 @@
-"""
-Noun Phrase Chunker — Assignment 1, Task 1.2
-
-Extracts noun phrases from each clause and outputs IOB tags.
-
-Input:  output/clauses.txt
-Output: output/chunks.txt
-    Format: token\tIOB-tag per line
-            blank line between clauses
-    IOB tags: B-NP (beginning of NP), I-NP (inside NP), O (outside)
-"""
-
 from __future__ import annotations
 
 from pathlib import Path
@@ -21,15 +9,7 @@ PROJECT_ROOT = Path(__file__).parent.parent.parent
 
 
 def chunk_clause(clause: str, nlp: spacy.Language) -> list[tuple[str, str]]:
-    """Parse a single clause and return token-level IOB tags for noun phrases.
 
-    Args:
-        clause: Single clause text.
-        nlp:    Loaded spaCy model.
-
-    Returns:
-        List of (token_text, iob_tag) tuples where iob_tag ∈ {B-NP, I-NP, O}.
-    """
     doc: Doc = nlp(clause)
 
     iob: dict[int, str] = {}
@@ -41,7 +21,9 @@ def chunk_clause(clause: str, nlp: spacy.Language) -> list[tuple[str, str]]:
 
 
 def main(output_dir: str | None = None, clauses_file: str | None = None) -> None:
-    clauses_path = Path(clauses_file) if clauses_file else PROJECT_ROOT / "output" / "clauses.txt"
+    clauses_path = (
+        Path(clauses_file) if clauses_file else PROJECT_ROOT / "output" / "clauses.txt"
+    )
     _out = Path(output_dir) if output_dir else PROJECT_ROOT / "output"
     _out.mkdir(parents=True, exist_ok=True)
     output_path = _out / "chunks.txt"

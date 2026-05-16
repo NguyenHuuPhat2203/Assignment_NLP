@@ -1,13 +1,3 @@
-"""
-Assignment 1 Runner
-
-Executes all Assignment 1 tasks in order and writes outputs to output/ as required
-by the assignment specification:
-    output/clauses.txt
-    output/chunks.txt
-    output/dependency.json
-"""
-
 from __future__ import annotations
 
 import sys
@@ -32,19 +22,19 @@ def main() -> None:
     ]
 
     for name, fn in tasks:
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print(f"  {name}")
-        print(f"{'='*60}")
+        print(f"{'=' * 60}")
         t0 = time.time()
         try:
             fn()
-            print(f"  ✓ Completed in {time.time() - t0:.1f}s")
+            print(f"   Completed in {time.time() - t0:.1f}s")
         except Exception as exc:
-            print(f"  ✗ FAILED: {exc}")
+            print(f"   FAILED: {exc}")
             raise
 
     output_dir = PROJECT_ROOT / "output"
-    print("\n✅ Assignment 1 complete.")
+    print("\n Assignment 1 complete.")
     for fname in ("clauses.txt", "chunks.txt", "dependency.json"):
         fpath = output_dir / fname
         if fpath.exists():

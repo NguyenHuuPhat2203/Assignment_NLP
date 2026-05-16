@@ -1,15 +1,3 @@
-"""
-Clause Splitter — Assignment 1, Task 1.1
-
-Splits legal contract text into clauses using:
-- spaCy sentence segmentation
-- Rule-based splitting on SCONJ/CC dependency edges
-- Keyword detection: if, unless, provided that, whereas, subject to
-
-Input:  input/raw_contracts.txt
-Output: output/clauses.txt  (one clause per line, blank lines preserved between sections)
-"""
-
 from __future__ import annotations
 
 import re
@@ -20,27 +8,45 @@ from spacy.tokens import Doc, Span
 
 PROJECT_ROOT = Path(__file__).parent.parent.parent
 
-CONDITIONAL_KEYWORDS: frozenset[str] = frozenset({
-    "if", "unless", "provided", "whereas", "subject",
-    "upon", "when", "whenever", "although", "though",
-    "because", "since", "after", "before", "until",
-})
+CONDITIONAL_KEYWORDS: frozenset[str] = frozenset(
+    {
+        "if",
+        "unless",
+        "provided",
+        "whereas",
+        "subject",
+        "upon",
+        "when",
+        "whenever",
+        "although",
+        "though",
+        "because",
+        "since",
+        "after",
+        "before",
+        "until",
+    }
+)
 
 COORD_KEYWORDS: frozenset[str] = frozenset({"and", "but", "or", "nor", "yet", "so"})
 
-_SUBORDINATE_DEPS: frozenset[str] = frozenset({
-    "ccomp", "relcl", "acl", "xcomp", "advcl",
-    "pcomp", "acl:relcl", "compound", "appos",
-})
+_SUBORDINATE_DEPS: frozenset[str] = frozenset(
+    {
+        "ccomp",
+        "relcl",
+        "acl",
+        "xcomp",
+        "advcl",
+        "pcomp",
+        "acl:relcl",
+        "compound",
+        "appos",
+    }
+)
 
 
 def _has_subject_and_verb(span: Span) -> bool:
-    """Return True if *span* contains a non-subordinate subject-verb pair.
 
-    Checks that there exists a nsubj (or equivalent) token whose immediate
-    syntactic head is inside the span and carries a main-clause dependency
-    label (not inside a relative/complement/subordinate clause).
-    """
     span_indices = {tok.i for tok in span}
     for tok in span:
         if tok.dep_ in {"nsubj", "nsubjpass", "csubj", "expl"}:
@@ -55,11 +61,7 @@ def _clean(text: str) -> str:
 
 
 def _split_on_coord(sent: Span) -> list[str]:
-    """
-    Split a sentence on CC tokens only when both sides form independent clauses
-    (each side must have a non-subordinate subject-verb pair).
-    Keeps conditional constructs intact.
-    """
+
     tokens = list(sent)
     split_indices: list[int] = []
 
@@ -87,13 +89,7 @@ def _split_on_coord(sent: Span) -> list[str]:
 
 
 def _split_on_sconj(sent: Span) -> list[str] | None:
-    """
-    Detect subordinating conjunctions that introduce conditional/adverbial clauses.
-    When found, the entire sentence is returned as a single clause so that the
-    conditional clause and its main clause are never separated.
 
-    Returns the sentence as a one-element list, or None if no SCONJ is detected.
-    """
     for tok in sent:
         if tok.dep_ == "mark" and tok.text.lower() in CONDITIONAL_KEYWORDS:
             return [_clean(sent.text)]
@@ -101,21 +97,7 @@ def _split_on_sconj(sent: Span) -> list[str] | None:
 
 
 def split_into_clauses(text: str, nlp: spacy.Language | None = None) -> list[str]:
-    """Split a legal contract text into individual clauses.
 
-    Sentences that contain a subordinating conjunction (if, unless, provided
-    that, whereas …) are kept intact as a single clause.  Other sentences are
-    further split at coordinating conjunctions only when both sides are
-    independently complete (each side has a subject and a finite verb).
-
-    Args:
-        text: Raw contract text.
-        nlp:  Optional pre-loaded spaCy model; loaded automatically when None.
-
-    Returns:
-        List of clause strings, one clause per element.  Short fragments
-        (≤ 2 tokens) are discarded.
-    """
     if nlp is None:
         nlp = spacy.load("en_core_web_sm")
 
