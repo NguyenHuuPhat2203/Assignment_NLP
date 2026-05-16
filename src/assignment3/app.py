@@ -18,6 +18,11 @@ import os
 import sys
 from pathlib import Path
 
+# Early import to avoid access violation in Streamlit's multi-threaded environment.
+# pyarrow's native DLL crashes during module initialization when too many threads
+# (Streamlit watchers, anyio, etc.) are running. Loading it early fixes this.
+import pyarrow  # noqa: E402
+
 # ---------------------------------------------------------------------------
 # Resolve project root so relative output/ paths work regardless of CWD
 # ---------------------------------------------------------------------------
@@ -58,7 +63,7 @@ logging.basicConfig(level=logging.INFO)
 # ---------------------------------------------------------------------------
 
 st.set_page_config(
-    title="Legal Contract Q&A",
+    page_title="Legal Contract Q&A",
     page_icon="⚖️",
     layout="wide",
 )
